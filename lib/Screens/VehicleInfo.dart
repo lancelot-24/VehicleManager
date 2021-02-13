@@ -1,7 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart';
 import 'package:vehicle_manager/Widgets/MyExpansion.dart';
 import 'package:vehicle_manager/Widgets/PageHelper.dart';
+
+import '../config.dart';
 
 class VehicleInfo extends StatefulWidget {
   final String vehicleNumber;
@@ -12,17 +18,34 @@ class VehicleInfo extends StatefulWidget {
 }
 
 class _VehicleInfoState extends State<VehicleInfo> {
+  //vahicle number
   final String vehicleNumber;
   _VehicleInfoState({@required this.vehicleNumber});
+
+  //formkey for validation
   final formKey = GlobalKey<FormState>();
-  String _amount, _detail;
-  bool edit = false;
+
+  //add maintainance
+  String _amount, _description;
+
+  //info edit icon
+  bool isLoading, edit = false;
+  // data pickers
   DateTime selectedDate = DateTime.now();
   DateTime selectedDateFitness = DateTime.now();
+
+  //scroll index
   int tabIndex = 0;
+
+  //vehicle info api response
+  var vehicleInfo;
+  String vehicleName, vehicleRC, vehicleOwner, vehicleType;
+
+  //refresh indication key
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
+  //date picker for insurance
   Future<void> _selectDateInsurance(BuildContext context) async {
     final DateTime picked = await showDatePicker(
       context: context,
@@ -38,6 +61,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
     }
   }
 
+//date picker for fitness
   Future<void> _selectDateFitness(BuildContext context) async {
     final DateTime picked = await showDatePicker(
       context: context,
@@ -53,6 +77,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
     }
   }
 
+  //validate function for form
   bool validate() {
     final form = formKey.currentState;
     if (form.validate()) {
@@ -63,20 +88,93 @@ class _VehicleInfoState extends State<VehicleInfo> {
     }
   }
 
+  //url vehicle/getVehicleInfo
+  var url = "${apiURL}vehicle/getVehicleInfo";
+
   @override
   void initState() {
+    getData();
     super.initState();
+  }
+
+  void getData() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      Response response =
+          await post(url, body: {"vehicleNumber": vehicleNumber});
+      print(response.body);
+      setState(() {
+        vehicleInfo = jsonDecode(response.body);
+      });
+      print('this is response data $vehicleInfo');
+    } catch (e) {
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        duration: Duration(seconds: 6),
+      ));
+    }
+    dynamic success = await vehicleInfo['success'];
+    print(success);
+    setState(() {
+      vehicleType = vehicleInfo["data"]["VehicleType"];
+      vehicleOwner = vehicleInfo["data"]["VehicleOwner"];
+      vehicleRC = vehicleInfo["data"]["VehicleRC"];
+      vehicleName = vehicleInfo["data"]["VehicleName"];
+    });
+
+    if (success == false) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(vehicleInfo["msg"]),
+        duration: Duration(seconds: 4),
+      ));
+    }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> _refresh() async {
     // return getUser().then((_user) {
     //   setState(() => user = _user);
     // });
+    print('i refresh');
   }
+
   @override
   void dispose() {
     super.dispose();
   }
+
+  List recipts = [
+    {
+      'name': 'Activa',
+      'amount': '10',
+      'date': '2000/20/20',
+      'description': 'air refile',
+    },
+    {
+      'name': 'Activa3',
+      'amount': '10',
+      'date': '2000/20/20',
+      'description': 'air refile',
+    },
+    {
+      'name': 'Activa2',
+      'amount': '10',
+      'date': '2000/20/20',
+      'description': 'air refile',
+    },
+    {
+      'name': 'Activa1',
+      'amount': '10',
+      'date': '2000/20/20',
+      'description': 'air refile',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +193,10 @@ class _VehicleInfoState extends State<VehicleInfo> {
                 });
               }
             });
+            if (tabIndex == 2) {
+              WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => _refreshIndicatorKey.currentState.show());
+            }
             return Scaffold(
               backgroundColor: primaryColor,
               appBar: AppBar(
@@ -150,145 +252,176 @@ class _VehicleInfoState extends State<VehicleInfo> {
                 children: [
                   Container(
                     padding: EdgeInsets.fromLTRB(10, 50, 10, 0),
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverGrid(
-                            delegate: SliverChildListDelegate([
-                              gridCard('Vehicle Number', vehicleNumber),
-                              gridCard('Vehicle Type', 'LVC-NT'),
-                              gridCard('Vehicle Name', 'Activa'),
-                              Card(
-                                elevation: 5,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Insurance Upto',
-                                        style: myTextStyle.copyWith(
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Row(
+                    child: (isLoading)
+                        ? Center(
+                            child: SpinKitThreeBounce(
+                              color: Colors.lightBlueAccent,
+                            ),
+                          )
+                        : CustomScrollView(
+                            slivers: [
+                              SliverGrid(
+                                  delegate: SliverChildListDelegate([
+                                    gridCard('Vehicle Number', vehicleNumber),
+                                    gridCard(
+                                        'Vehicle Type',
+                                        (vehicleType == null)
+                                            ? '-'
+                                            : vehicleType),
+                                    gridCard(
+                                        'Vehicle Name',
+                                        (vehicleName == null)
+                                            ? '-'
+                                            : vehicleName),
+                                    Card(
+                                      elevation: 5,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            10, 10, 10, 0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
+                                              MainAxisAlignment.start,
                                           children: [
                                             Text(
-                                                "${selectedDate.day.toString()}/${selectedDate.month.toString()}/${selectedDate.year.toString()}",
-                                                style: myTextStyle.copyWith(
-                                                    fontSize: 20,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            Visibility(
-                                                visible: edit,
-                                                child: GestureDetector(
-                                                    onTap: () =>
-                                                        _selectDateInsurance(
-                                                            context),
-                                                    child: Icon(Icons
-                                                        .date_range_rounded))),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              gridCard('Vehicle Owner', 'Some One '),
-                              Card(
-                                elevation: 5,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Fitness Upto',
-                                        style: myTextStyle.copyWith(
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            Text(
-                                              "${selectedDateFitness.day.toString()}/${selectedDateFitness.month.toString()}/${selectedDateFitness.year.toString()}",
+                                              'Insurance Upto',
                                               style: myTextStyle.copyWith(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
                                               ),
                                             ),
-                                            Visibility(
-                                                visible: edit,
-                                                child: GestureDetector(
-                                                    onTap: () =>
-                                                        _selectDateFitness(
-                                                            context),
-                                                    child: Icon(Icons
-                                                        .date_range_rounded))),
+                                            Expanded(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceEvenly,
+                                                children: [
+                                                  Text(
+                                                      "${selectedDate.day.toString()}/${selectedDate.month.toString()}/${selectedDate.year.toString()}",
+                                                      style:
+                                                          myTextStyle.copyWith(
+                                                              fontSize: 20,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                  Visibility(
+                                                      visible: edit,
+                                                      child: GestureDetector(
+                                                          onTap: () =>
+                                                              _selectDateInsurance(
+                                                                  context),
+                                                          child: Icon(Icons
+                                                              .date_range_rounded))),
+                                                ],
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
-                                    ],
+                                    ),
+                                    gridCard(
+                                        'Vehicle Owner',
+                                        (vehicleOwner == null)
+                                            ? '-'
+                                            : vehicleOwner),
+                                    Card(
+                                      elevation: 5,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            10, 10, 10, 0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Fitness Upto',
+                                              style: myTextStyle.copyWith(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceEvenly,
+                                                children: [
+                                                  Text(
+                                                    "${selectedDateFitness.day.toString()}/${selectedDateFitness.month.toString()}/${selectedDateFitness.year.toString()}",
+                                                    style: myTextStyle.copyWith(
+                                                      fontSize: 20,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Visibility(
+                                                      visible: edit,
+                                                      child: GestureDetector(
+                                                          onTap: () =>
+                                                              _selectDateFitness(
+                                                                  context),
+                                                          child: Icon(Icons
+                                                              .date_range_rounded))),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    gridCard('Vehicle RC',
+                                        (vehicleRC == null) ? '-' : vehicleRC),
+                                  ]),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 10,
+                                          crossAxisSpacing: 10,
+                                          childAspectRatio: 1.5)),
+                              SliverList(
+                                delegate: SliverChildListDelegate([
+                                  SizedBox(
+                                    height: 40,
                                   ),
-                                ),
-                              ),
-                            ]),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 10,
-                                    childAspectRatio: 1.5)),
-                        SliverList(
-                          delegate: SliverChildListDelegate([
-                            SizedBox(
-                              height: 40,
-                            ),
-                            Visibility(
-                              visible: edit,
-                              child: Card(
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                elevation: 5,
-                                child: MaterialButton(
-                                  height: 50,
-                                  elevation: 5,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12)),
-                                  onPressed: () {
-                                    setState(() {
-                                      edit = false;
-                                    });
-                                  },
-                                  child: Text(
-                                    'SUBMIT',
-                                    style: myTextStyle.copyWith(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
+                                  Visibility(
+                                    visible: edit,
+                                    child: Card(
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      elevation: 5,
+                                      child: MaterialButton(
+                                        height: 50,
+                                        elevation: 5,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                        onPressed: () {
+                                          setState(() {
+                                            edit = false;
+                                          });
+                                        },
+                                        child: Text(
+                                          'SUBMIT',
+                                          style: myTextStyle.copyWith(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                          ]),
-                        )
-                      ],
-                    ),
+                                ]),
+                              )
+                            ],
+                          ),
                   ),
                   Container(
                     child: SingleChildScrollView(
@@ -353,7 +486,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                   decoration:
                                       buildSignUpInputDecoration('Description')
                                           .copyWith(),
-                                  onSaved: (value) => _detail = value,
+                                  onSaved: (value) => _description = value,
                                 ),
                                 SizedBox(
                                   height: 20,
@@ -374,7 +507,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(SnackBar(
                                           content: Text(
-                                              'amount is $_amount \n detail is $_detail'),
+                                              'amount is $_amount \n detail is $_description'),
                                           duration: Duration(seconds: 5),
                                         ));
                                       }
@@ -405,10 +538,10 @@ class _VehicleInfoState extends State<VehicleInfo> {
                             delegate: SliverChildBuilderDelegate((context, i) {
                               return MyExpansion(
                                 vehicleNumber: vehicleNumber,
-                                vehicleName: 'Activa',
-                                amount: '10',
-                                date: '20/10/2021',
-                                description: 'Air Refile 2 tires',
+                                vehicleName: recipts[i]['name'],
+                                amount: recipts[i]['amount'],
+                                date: recipts[i]['date'],
+                                description: recipts[i]['description'],
                                 delete: () => showDialog(
                                     context: context,
                                     barrierDismissible: false,
@@ -420,7 +553,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                       );
                                     }),
                               );
-                            }, childCount: 10),
+                            }, childCount: recipts.length),
                           ),
                           SliverList(
                             delegate: SliverChildListDelegate([

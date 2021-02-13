@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:vehicle_manager/Widgets/PageHelper.dart';
 
 class AddVehicle extends StatefulWidget {
   @override
@@ -55,8 +55,9 @@ class _AddVehicleState extends State<AddVehicle> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: primaryColor,
         appBar: AppBar(
-          backgroundColor: Colors.indigo,
+          backgroundColor: secondaryColor,
           centerTitle: true,
           automaticallyImplyLeading: false,
           leading: IconButton(
@@ -65,14 +66,13 @@ class _AddVehicleState extends State<AddVehicle> {
           ),
           title: Text(
             'Add Vehicle',
-            style: GoogleFonts.itim(),
+            style: myTextStyle,
           ),
           actions: [
             TextButton(
-              child: Text(
-                'Save',
-                style: GoogleFonts.itim(color: Colors.white, fontSize: 20),
-              ),
+              child: Text('Save',
+                  style:
+                      myTextStyle.copyWith(color: Colors.white, fontSize: 20)),
               onPressed: () {
                 if (validate()) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +80,7 @@ class _AddVehicleState extends State<AddVehicle> {
                       duration: Duration(seconds: 3),
                       content: Text(
                         '$vehicleNumber \n $vehicleType \n $vehicleName \n $vehicleOwner \n $insuranceUpto \n $fitnessUpto',
-                        style: GoogleFonts.itim(),
+                        style: myTextStyle,
                       ),
                     ),
                   );
@@ -103,7 +103,7 @@ class _AddVehicleState extends State<AddVehicle> {
                       }
                       return null;
                     },
-                    style: GoogleFonts.itim(fontSize: 22),
+                    style: myTextStyle.copyWith(fontSize: 22),
                     decoration: buildSignUpInputDecoration('Vehicle Number'),
                     onSaved: (value) => vehicleNumber = value,
                   ),
@@ -117,7 +117,9 @@ class _AddVehicleState extends State<AddVehicle> {
                       }
                       return null;
                     },
-                    style: GoogleFonts.itim(fontSize: 22),
+                    style: myTextStyle.copyWith(
+                      fontSize: 22,
+                    ),
                     decoration: buildSignUpInputDecoration('Vehicle Type'),
                     onSaved: (value) => vehicleType = value,
                   ),
@@ -131,7 +133,9 @@ class _AddVehicleState extends State<AddVehicle> {
                       }
                       return null;
                     },
-                    style: GoogleFonts.itim(fontSize: 22),
+                    style: myTextStyle.copyWith(
+                      fontSize: 22,
+                    ),
                     decoration: buildSignUpInputDecoration('Vehicle Name'),
                     onSaved: (value) => vehicleName = value,
                   ),
@@ -145,7 +149,9 @@ class _AddVehicleState extends State<AddVehicle> {
                       }
                       return null;
                     },
-                    style: GoogleFonts.itim(fontSize: 22),
+                    style: myTextStyle.copyWith(
+                      fontSize: 22,
+                    ),
                     decoration: buildSignUpInputDecoration('Vehicle Owner'),
                     onSaved: (value) => vehicleOwner = value,
                   ),
@@ -159,7 +165,9 @@ class _AddVehicleState extends State<AddVehicle> {
                       }
                       return null;
                     },
-                    style: GoogleFonts.itim(fontSize: 22),
+                    style: myTextStyle.copyWith(
+                      fontSize: 22,
+                    ),
                     onTap: () {
                       _selectDateInsurance(context);
                     },
@@ -176,7 +184,9 @@ class _AddVehicleState extends State<AddVehicle> {
                       }
                       return null;
                     },
-                    style: GoogleFonts.itim(fontSize: 22),
+                    style: myTextStyle.copyWith(
+                      fontSize: 22,
+                    ),
                     decoration: buildSignUpInputDecoration('Fitness'),
                     onSaved: (value) => fitnessUpto = value,
                   ),
@@ -189,27 +199,6 @@ class _AddVehicleState extends State<AddVehicle> {
           ),
         ),
       ),
-    );
-  }
-
-  InputDecoration buildSignUpInputDecoration(String hint) {
-    return InputDecoration(
-      labelText: hint,
-      filled: true,
-      labelStyle: GoogleFonts.itim(color: Colors.indigo),
-      fillColor: Colors.white,
-      focusColor: Colors.white,
-      border: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.indigo, width: 1)),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.indigo, width: 1)),
-      contentPadding: EdgeInsets.only(left: 14.0, bottom: 10.0, top: 10.0),
     );
   }
 }

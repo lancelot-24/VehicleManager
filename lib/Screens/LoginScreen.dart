@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_session/flutter_session.dart';
@@ -65,10 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
       buildDialog(context);
     }
 
-    HttpClient client = new HttpClient();
-    client.badCertificateCallback =
-        ((X509Certificate cert, String host, int port) => true);
-
     print('url is $url');
     Map<String, String> userData = {
       'userName': _userName,
@@ -76,11 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
     };
 
     try {
-      // HttpClientRequest request = await client.postUrl(Uri.parse(url));
-      // request.add(utf8.encode(jsonEncode(userData)));
-      // HttpClientResponse response = await request.close();
-      // String reply = await response.transform(utf8.decoder).join();
-      // print(reply);
       Response response = await post(url, body: userData);
       print(response.body);
       setState(() {

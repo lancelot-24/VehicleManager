@@ -1,52 +1,71 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:http/http.dart';
 import 'package:vehicle_manager/Screens/VehicleInfo.dart';
 import 'package:vehicle_manager/Widgets/PageHelper.dart';
 
+import '../config.dart';
 import 'AddVehicle.dart';
 
-class VehiclesScreen extends StatefulWidget {
+class VehiclesList extends StatefulWidget {
   @override
-  _VehiclesScreenState createState() => _VehiclesScreenState();
+  _VehiclesListState createState() => _VehiclesListState();
 }
 
-class _VehiclesScreenState extends State<VehiclesScreen> {
+class _VehiclesListState extends State<VehiclesList> {
 //refresh indicator
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
-  List vehicleNumber = [
-    'MH20RS2000',
-    'MH20RS2001',
-    'MH20RS2002',
-    'MH20RS2003',
-    'MH20RS2004',
-    'MH20RS2005',
-    'MH20RS2006',
-    'MH20RS2007',
-    'MH20RS2008',
-    'MH20RS2009',
-    'MH20RS2010',
-    'MH20RS2011',
-    'MH20RS2012',
-    'MH20RS2013',
-    'MH20RS2014',
-    'MH20RS2015',
-  ];
+  List vehiclesList = [];
 
-  bool isDelete;
+  bool isDelete, isLoading;
+
+  //url
+  var url = "${apiURL}vehicle/getVehicleList";
 
   @override
   void initState() {
+    getData();
     isDelete = false;
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _refreshIndicatorKey.currentState.show());
     super.initState();
   }
 
+  void getData() async {
+    setState(() {
+      isLoading = true;
+    });
+    var responseData;
+    try {
+      Response response = await get(url);
+      print(response.body);
+      setState(() {
+        responseData = jsonDecode(response.body);
+      });
+    } catch (e) {
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        duration: Duration(seconds: 6),
+      ));
+    }
+    setState(() {
+      vehiclesList = responseData["data"];
+    });
+
+    bool success = await responseData['success'];
+    print(success);
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   Future<void> _refresh() async {
-    // return getUser().then((_user) {
-    //   setState(() => user = _user);
-    // });
+    getData();
   }
 
   @override
@@ -94,7 +113,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
             ),
           ],
         ),
-        body: (vehicleNumber.isNotEmpty)
+        body: (vehiclesList.isNotEmpty)
             ? RefreshIndicator(
                 key: _refreshIndicatorKey,
                 onRefresh: _refresh,
@@ -105,7 +124,8 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                           context,
                           MaterialPageRoute(
                               builder: (context) => VehicleInfo(
-                                  vehicleNumber: vehicleNumber[i]))),
+                                  vehicleNumber: vehiclesList[i]
+                                      ["vehicleNumber"]))),
                       child: Container(
                         margin: EdgeInsets.only(top: 5),
                         padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
@@ -118,7 +138,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                               Expanded(
                                 child: Center(
                                   child: Text(
-                                    vehicleNumber[i],
+                                    vehiclesList[i]["vehicleNumber"],
                                     style: myTextStyle.copyWith(
                                       fontSize: 30,
                                     ),
@@ -149,7 +169,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                       builder: (context) {
                                         return deleteDialog(
                                           titleText:
-                                              'Are you sure to delete ${vehicleNumber[i]} this vehicle',
+                                              'Are you sure to delete ${vehiclesList[i]["vehicleNumber"]} this vehicle',
                                           ifYes: () {},
                                           ifNo: () => Navigator.pop(context),
                                         );
@@ -162,19 +182,25 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                       ),
                     );
                   },
-                  itemCount: vehicleNumber.length,
+                  itemCount: vehiclesList.length,
                 ),
               )
             : Container(
                 alignment: Alignment.topCenter,
                 padding: EdgeInsets.fromLTRB(20, 40, 20, 10),
-                child: Text(
-                  'Not added vehicle yet, \n you can add vehicle by clicking Plus(+) Button on right corner',
-                  style: myTextStyle.copyWith(
-                    fontSize: 30,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+                child: (isLoading)
+                    ? Center(
+                        child: SpinKitThreeBounce(
+                          color: Colors.lightBlueAccent,
+                        ),
+                      )
+                    : Text(
+                        'Not added vehicle yet, \n you can add vehicle by clicking Plus(+) Button on right corner',
+                        style: myTextStyle.copyWith(
+                          fontSize: 30,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
               ),
       ),
     );

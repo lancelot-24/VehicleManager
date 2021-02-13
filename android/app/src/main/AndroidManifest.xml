@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.crypticn24.vehicle_manager">
    <application
+        android:usesCleartextTraffic="true"
         android:label="vehicle_manager"
         android:icon="@mipmap/ic_launcher">
         <activity
