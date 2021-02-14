@@ -5,7 +5,7 @@ import 'package:flutter_session/flutter_session.dart';
 import 'package:http/http.dart';
 import 'package:vehicle_manager/Model/UserData.dart';
 import 'package:vehicle_manager/Widgets/PageHelper.dart';
-import 'package:vehicle_manager/config.dart';
+import 'file:///C:/Users/Niket/AndroidStudioProjects/vehicle_manager/lib/Services/config.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatefulWidget {

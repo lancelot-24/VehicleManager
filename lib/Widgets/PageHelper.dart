@@ -8,6 +8,7 @@ const Color textBlack = Colors.black;
 const Color deleteIcon = Color(0xfff00e0e);
 const Color primaryColor = Color(0xffdee0de);
 const Color secondaryColor = Color(0xff316879);
+const Color redWhite = Color(0xffffcdd2);
 
 //itim text Style
 TextStyle myTextStyle = GoogleFonts.adventPro();
@@ -48,10 +49,27 @@ buildDialog(BuildContext context) {
       });
 }
 
+//datapicker
+Future<DateTime> datePicker(
+    {BuildContext context, DateTime selectedDate}) async {
+  final DateTime picked = await showDatePicker(
+    context: context,
+    initialDate: selectedDate,
+    firstDate: DateTime(2000),
+    lastDate: DateTime(3000),
+  );
+
+  if (picked != null && picked != selectedDate) {
+    selectedDate = picked;
+  }
+  return picked;
+}
+
 //vehicle info cards fixed
-Widget gridCard(String title, String data) {
+Widget gridCard({String title, String data, Color cardColor}) {
   return Card(
     elevation: 5,
+    color: cardColor,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     child: Padding(
       padding: const EdgeInsets.all(10.0),
@@ -95,7 +113,7 @@ Widget myTab(String text, IconData icon) {
 //delete Dialog
 
 Widget deleteDialog({String titleText, VoidCallback ifYes, VoidCallback ifNo}) {
-  return AlertDialog(
+  return SimpleDialog(
     backgroundColor: secondaryColor,
     title: Center(
       child: Text(
@@ -107,33 +125,39 @@ Widget deleteDialog({String titleText, VoidCallback ifYes, VoidCallback ifNo}) {
       ),
     ),
     contentPadding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-    content: Row(
-      children: [
-        Expanded(
-          child: TextButton(
-            child: Text(
-              'Yes',
-              style: myTextStyle.copyWith(
-                color: textWhite,
+    children: [
+      Divider(
+        thickness: 1,
+        height: 20,
+        color: textWhite,
+      ),
+      Row(
+        children: [
+          Expanded(
+            child: TextButton(
+              child: Text(
+                'Yes',
+                style: myTextStyle.copyWith(color: textWhite, fontSize: 20),
               ),
+              onPressed: ifYes,
             ),
-            onPressed: ifYes,
           ),
-        ),
-        SizedBox(
-            height: 30,
-            child: VerticalDivider(
-              thickness: 1,
-              width: 10,
-              color: textWhite,
-            )),
-        Expanded(
-          child: TextButton(
-            child: Text('No', style: myTextStyle.copyWith(color: textWhite)),
-            onPressed: ifNo,
+          SizedBox(
+              height: 48,
+              child: VerticalDivider(
+                thickness: 1,
+                width: 10,
+                color: textWhite,
+              )),
+          Expanded(
+            child: TextButton(
+              child: Text('No',
+                  style: myTextStyle.copyWith(color: textWhite, fontSize: 20)),
+              onPressed: ifNo,
+            ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
+    ],
   );
 }

@@ -7,7 +7,7 @@ import 'package:http/http.dart';
 import 'package:vehicle_manager/Screens/VehicleInfo.dart';
 import 'package:vehicle_manager/Widgets/PageHelper.dart';
 
-import '../config.dart';
+import '../Services/config.dart';
 import 'AddVehicle.dart';
 
 class VehiclesList extends StatefulWidget {
@@ -47,6 +47,9 @@ class _VehiclesListState extends State<VehiclesList> {
         responseData = jsonDecode(response.body);
       });
     } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
       print(e);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(e.toString()),

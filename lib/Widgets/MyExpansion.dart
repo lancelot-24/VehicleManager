@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:vehicle_manager/Widgets/PageHelper.dart';
 
 class MyExpansion extends StatefulWidget {
-  final String vehicleNumber, vehicleName, date, amount, description;
+  final String repairId, vehicleName, date, amount, description;
   final VoidCallback delete;
   MyExpansion(
-      {this.vehicleNumber,
+      {this.repairId,
       this.vehicleName,
       this.date,
       this.amount,
@@ -14,7 +14,7 @@ class MyExpansion extends StatefulWidget {
   @override
   _MyExpansionState createState() => _MyExpansionState(
       vehicleName: vehicleName,
-      vehicleNumber: vehicleNumber,
+      repairId: repairId,
       date: date,
       description: description,
       amount: amount,
@@ -22,10 +22,10 @@ class MyExpansion extends StatefulWidget {
 }
 
 class _MyExpansionState extends State<MyExpansion> {
-  final String vehicleNumber, vehicleName, date, amount, description;
+  final String repairId, vehicleName, date, amount, description;
   final VoidCallback delete;
   _MyExpansionState(
-      {this.vehicleNumber,
+      {this.repairId,
       this.vehicleName,
       this.date,
       this.amount,
@@ -55,7 +55,7 @@ class _MyExpansionState extends State<MyExpansion> {
                         style: myTextStyle.copyWith(fontSize: 10),
                       ),
                       Text(
-                        '$vehicleNumber - $vehicleName',
+                        '$repairId - $vehicleName',
                         style: myTextStyle.copyWith(fontSize: 14),
                       ),
                       SizedBox(
