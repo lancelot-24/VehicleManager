@@ -51,7 +51,7 @@ class _MyExpansionState extends State<MyExpansion> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Vehicle',
+                        'Repair ID',
                         style: myTextStyle.copyWith(fontSize: 10),
                       ),
                       Text(

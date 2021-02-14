@@ -29,6 +29,9 @@ class _VehicleInfoState extends State<VehicleInfo> {
     super.initState();
   }
 
+  //scroll index
+  int tabIndex = 0;
+
   //TODO:vehicle info section
   bool infoEdit = false, infoLoading;
   var vehicleInfoData;
@@ -268,6 +271,11 @@ class _VehicleInfoState extends State<VehicleInfo> {
       setState(() {
         repairHistoryList = responseHistoryData['data'];
       });
+      // repairHistoryList.sort((a, b) {
+      //   var sort =
+      //       b["repairDate"].toString().compareTo(a["repairDate"].toString());
+      //   return sort;
+      // });
     }
 
     setState(() {
@@ -287,9 +295,6 @@ class _VehicleInfoState extends State<VehicleInfo> {
   Future<void> _refresh() async {
     getRepairHistory();
   }
-
-  //scroll index
-  int tabIndex = 0;
 
   @override
   void dispose() {
@@ -691,49 +696,9 @@ class _VehicleInfoState extends State<VehicleInfo> {
                     child: RefreshIndicator(
                       key: _refreshIndicatorKey,
                       onRefresh: _refresh,
-                      child: (loadHistory)
-                          ? Center(
-                              child: SpinKitThreeBounce(
-                                color: Colors.lightBlueAccent,
-                              ),
-                            )
-                          : CustomScrollView(
+                      child: (repairHistoryList.isNotEmpty)
+                          ? CustomScrollView(
                               slivers: [
-                                SliverList(
-                                  delegate:
-                                      SliverChildBuilderDelegate((context, i) {
-                                    setVehicleHistory(i);
-                                    return MyExpansion(
-                                      repairId: (repairId == null)
-                                          ? '-'
-                                          : repairId.toString(),
-                                      vehicleName: (repairVehicleName == null)
-                                          ? '-'
-                                          : repairVehicleName,
-                                      amount: (repairAmount == null)
-                                          ? '-'
-                                          : repairAmount,
-                                      date: (repairDate == null)
-                                          ? '-'
-                                          : repairDate,
-                                      description: (repairDescription == null)
-                                          ? '-'
-                                          : repairDescription,
-                                      delete: () => showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (context) {
-                                            return deleteDialog(
-                                              titleText:
-                                                  'Are you sure to delete',
-                                              ifYes: () {},
-                                              ifNo: () =>
-                                                  Navigator.pop(context),
-                                            );
-                                          }),
-                                    );
-                                  }, childCount: repairHistoryList.length - 1),
-                                ),
                                 if (repairHistoryList.isNotEmpty)
                                   SliverList(
                                     delegate: SliverChildListDelegate([
@@ -769,9 +734,55 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                         ),
                                       ),
                                     ]),
-                                  )
+                                  ),
+                                SliverList(
+                                  delegate:
+                                      SliverChildBuilderDelegate((context, i) {
+                                    setVehicleHistory(i);
+                                    return MyExpansion(
+                                      repairId: (repairId == null)
+                                          ? '-'
+                                          : repairId.toString(),
+                                      vehicleName: (repairVehicleName == null)
+                                          ? '-'
+                                          : repairVehicleName,
+                                      amount: (repairAmount == null)
+                                          ? '-'
+                                          : repairAmount,
+                                      date: (repairDate == null)
+                                          ? '-'
+                                          : repairDate,
+                                      description: (repairDescription == null)
+                                          ? '-'
+                                          : repairDescription,
+                                      delete: () => showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (context) {
+                                            return deleteDialog(
+                                              titleText:
+                                                  'Are you sure to delete this repair',
+                                              ifYes: () {},
+                                              ifNo: () =>
+                                                  Navigator.pop(context),
+                                            );
+                                          }),
+                                    );
+                                  }, childCount: repairHistoryList.length - 1),
+                                ),
                               ],
-                            ),
+                            )
+                          : (loadHistory)
+                              ? Center(
+                                  child: SpinKitThreeBounce(
+                                    color: Colors.lightBlueAccent,
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                  'No Maintenance Done Yet',
+                                  style: myTextStyle.copyWith(fontSize: 30),
+                                )),
                     ),
                   ),
                 ],

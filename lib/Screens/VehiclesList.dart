@@ -21,21 +21,18 @@ class _VehiclesListState extends State<VehiclesList> {
       new GlobalKey<RefreshIndicatorState>();
   List vehiclesList = [];
 
-  bool isDelete, isLoading;
-
-  //url
-  var url = "${apiURL}vehicle/getVehicleList";
+  bool isDelete, isLoading, isVehicleDelete;
 
   @override
   void initState() {
     getData();
     isDelete = false;
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _refreshIndicatorKey.currentState.show());
+    isVehicleDelete = false;
     super.initState();
   }
 
   void getData() async {
+    var url = "${apiURL}vehicle/getVehicleList";
     setState(() {
       isLoading = true;
     });
@@ -69,6 +66,57 @@ class _VehiclesListState extends State<VehiclesList> {
 
   Future<void> _refresh() async {
     getData();
+  }
+
+  void deleteVehicle(String vehicleNumber) async {
+    setState(() {
+      isVehicleDelete = true;
+    });
+
+    if (isVehicleDelete == true) {
+      buildDialog(context);
+    }
+    print(vehicleNumber);
+    var urlDeleteVehicle = "${apiURL}vehicle/deleteVehicle";
+    print(urlDeleteVehicle);
+    var responseToDeleteRequest;
+    Map<String, String> deleteVehicle = {
+      'vehicleNumber': vehicleNumber,
+    };
+    try {
+      Response response = await post(urlDeleteVehicle, body: deleteVehicle);
+      print(response.body);
+      setState(() {
+        responseToDeleteRequest = jsonDecode(response.body);
+      });
+    } catch (e) {
+      setState(() {
+        isVehicleDelete = false;
+      });
+      if (isVehicleDelete == false) {
+        Navigator.pop(context);
+      }
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        duration: Duration(seconds: 6),
+      ));
+    }
+    bool success = responseToDeleteRequest["success"];
+    setState(() {
+      isVehicleDelete = false;
+    });
+    if (isVehicleDelete == false) {
+      Navigator.pop(context);
+    }
+    Navigator.pop(context);
+    if (success) {
+      _refresh();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Vehicle Deleted"),
+        duration: Duration(seconds: 3),
+      ));
+    }
   }
 
   @override
@@ -173,7 +221,10 @@ class _VehiclesListState extends State<VehiclesList> {
                                         return deleteDialog(
                                           titleText:
                                               'Are you sure to delete ${vehiclesList[i]["vehicleNumber"]} this vehicle',
-                                          ifYes: () {},
+                                          ifYes: () {
+                                            deleteVehicle(vehiclesList[i]
+                                                ["vehicleNumber"]);
+                                          },
                                           ifNo: () => Navigator.pop(context),
                                         );
                                       }),

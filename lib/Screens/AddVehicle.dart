@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:vehicle_manager/Widgets/PageHelper.dart';
+import 'package:vehicle_manager/Services/config.dart';
 
 class AddVehicle extends StatefulWidget {
   @override
@@ -7,13 +11,17 @@ class AddVehicle extends StatefulWidget {
 }
 
 class _AddVehicleState extends State<AddVehicle> {
-  String vehicleNumber,
-      vehicleType,
-      vehicleName,
-      vehicleOwner,
-      insuranceUpto,
-      fitnessUpto;
+  String vehicleNumber, vehicleType, vehicleName, vehicleOwner, vehicleRC;
   final formKey = GlobalKey<FormState>();
+  bool _isAddLoading;
+
+  @override
+  void initState() {
+    setState(() {
+      _isAddLoading = false;
+    });
+    super.initState();
+  }
 
   bool validate() {
     final form = formKey.currentState;
@@ -25,25 +33,62 @@ class _AddVehicleState extends State<AddVehicle> {
     }
   }
 
-  DateTime selectedDate = DateTime.now();
-  Future<void> _selectDateInsurance(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(3000),
-    );
+  var responseToAddRequest;
 
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
+  void addVehicle() async {
+    setState(() {
+      _isAddLoading = true;
+    });
+
+    if (_isAddLoading == true) {
+      buildDialog(context);
     }
-  }
+    print('in1');
+    var urlAddVehicle = "${apiURL}vehicle/registerVehicle";
+    Map<String, String> addVehicle = {
+      'vehicleNumber': vehicleNumber,
+      'vehicleType': vehicleType,
+      'vehicleOwner': vehicleOwner,
+      'vehicleName': vehicleName,
+      'vehicleRC': vehicleRC,
+    };
+    print('in2');
 
-  @override
-  void initState() {
-    super.initState();
+    try {
+      Response response = await post(urlAddVehicle, body: addVehicle);
+
+      print(response.body);
+
+      setState(() {
+        responseToAddRequest = jsonDecode(response.body);
+      });
+    } catch (e) {
+      setState(() {
+        _isAddLoading = false;
+      });
+      if (_isAddLoading == false) {
+        Navigator.pop(context);
+      }
+      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(e.toString()),
+        duration: Duration(seconds: 6),
+      ));
+    }
+    bool success = responseToAddRequest["success"];
+
+    setState(() {
+      _isAddLoading = false;
+    });
+    if (_isAddLoading == false) {
+      Navigator.pop(context);
+    }
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Vehicle Added'),
+        duration: Duration(seconds: 3),
+      ));
+    }
   }
 
   @override
@@ -68,26 +113,6 @@ class _AddVehicleState extends State<AddVehicle> {
             'Add Vehicle',
             style: myTextStyle,
           ),
-          actions: [
-            TextButton(
-              child: Text('Save',
-                  style:
-                      myTextStyle.copyWith(color: Colors.white, fontSize: 20)),
-              onPressed: () {
-                if (validate()) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: Duration(seconds: 3),
-                      content: Text(
-                        '$vehicleNumber \n $vehicleType \n $vehicleName \n $vehicleOwner \n $insuranceUpto \n $fitnessUpto',
-                        style: myTextStyle,
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
         ),
         body: SingleChildScrollView(
           child: Padding(
@@ -104,7 +129,7 @@ class _AddVehicleState extends State<AddVehicle> {
                       return null;
                     },
                     style: myTextStyle.copyWith(fontSize: 22),
-                    decoration: buildSignUpInputDecoration('Vehicle Number'),
+                    decoration: buildSignUpInputDecoration('Vehicle Number *'),
                     onSaved: (value) => vehicleNumber = value,
                   ),
                   SizedBox(
@@ -120,7 +145,7 @@ class _AddVehicleState extends State<AddVehicle> {
                     style: myTextStyle.copyWith(
                       fontSize: 22,
                     ),
-                    decoration: buildSignUpInputDecoration('Vehicle Type'),
+                    decoration: buildSignUpInputDecoration('Vehicle Type *'),
                     onSaved: (value) => vehicleType = value,
                   ),
                   SizedBox(
@@ -136,7 +161,7 @@ class _AddVehicleState extends State<AddVehicle> {
                     style: myTextStyle.copyWith(
                       fontSize: 22,
                     ),
-                    decoration: buildSignUpInputDecoration('Vehicle Name'),
+                    decoration: buildSignUpInputDecoration('Vehicle Name *'),
                     onSaved: (value) => vehicleName = value,
                   ),
                   SizedBox(
@@ -152,7 +177,7 @@ class _AddVehicleState extends State<AddVehicle> {
                     style: myTextStyle.copyWith(
                       fontSize: 22,
                     ),
-                    decoration: buildSignUpInputDecoration('Vehicle Owner'),
+                    decoration: buildSignUpInputDecoration('Vehicle Owner *'),
                     onSaved: (value) => vehicleOwner = value,
                   ),
                   SizedBox(
@@ -161,37 +186,43 @@ class _AddVehicleState extends State<AddVehicle> {
                   TextFormField(
                     validator: (value) {
                       if (value.isEmpty) {
-                        return "Insurance can't be empty";
+                        return "Vehicle can't be empty";
                       }
                       return null;
                     },
                     style: myTextStyle.copyWith(
                       fontSize: 22,
                     ),
-                    onTap: () {
-                      _selectDateInsurance(context);
-                    },
-                    decoration: buildSignUpInputDecoration('Insurance'),
-                    onSaved: (value) => insuranceUpto = value,
+                    decoration: buildSignUpInputDecoration('Vehicle RC *'),
+                    onSaved: (value) => vehicleRC = value,
                   ),
                   SizedBox(
                     height: 15,
                   ),
-                  TextFormField(
-                    validator: (value) {
-                      if (value.isEmpty) {
-                        return "Fitness can't be empty";
-                      }
-                      return null;
-                    },
-                    style: myTextStyle.copyWith(
-                      fontSize: 22,
+                  Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    elevation: 5,
+                    color: secondaryColor,
+                    child: MaterialButton(
+                      height: 50,
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      onPressed: () {
+                        if (validate()) {
+                          addVehicle();
+                        }
+                      },
+                      child: Text(
+                        'Add Vehicle',
+                        style: myTextStyle.copyWith(
+                          fontSize: 24,
+                          color: textWhite,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    decoration: buildSignUpInputDecoration('Fitness'),
-                    onSaved: (value) => fitnessUpto = value,
-                  ),
-                  SizedBox(
-                    height: 15,
                   ),
                 ],
               ),
