@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vehicle_manager/Screens/AddVehicle.dart';
 import 'package:vehicle_manager/Screens/HomeScreen.dart';
 import 'package:vehicle_manager/Screens/LoginScreen.dart';
 import 'package:vehicle_manager/Screens/SplashScreen.dart';
@@ -18,7 +19,8 @@ class MyApp extends StatelessWidget {
         '/SplashScreen': (context) => SplashScreen(),
         '/LoginScreen': (context) => LoginScreen(),
         '/HomeScreen': (context) => HomeScreen(),
-        '/VehicleScreen': (context) => VehiclesList(),
+        '/VehicleList': (context) => VehiclesList(),
+        '/AddVehicle': (context) => AddVehicle(),
       },
     );
   }

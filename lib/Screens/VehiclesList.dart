@@ -1,14 +1,14 @@
 import 'dart:convert';
-
+import 'package:vehicle_manager/Helper/Colors.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:vehicle_manager/Helper/LoadingDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart';
 import 'package:vehicle_manager/Screens/VehicleInfo.dart';
-import 'package:vehicle_manager/Widgets/PageHelper.dart';
-
+import 'package:vehicle_manager/Helper/PageHelper.dart';
+import 'package:vehicle_manager/Helper/DeleteDialog.dart';
 import '../Services/config.dart';
-import 'AddVehicle.dart';
 
 class VehiclesList extends StatefulWidget {
   @override
@@ -16,52 +16,56 @@ class VehiclesList extends StatefulWidget {
 }
 
 class _VehiclesListState extends State<VehiclesList> {
-//refresh indicator
+  //refresh indicator
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
-  List vehiclesList = [];
 
-  bool isDelete, isLoading, isVehicleDelete;
+  final GlobalKey<ScaffoldState> vehicleListKey =
+      new GlobalKey<ScaffoldState>();
+  List vehiclesList = [];
+  bool isLoading, isDeleteVisible = false, isVehicleDelete = false;
 
   @override
   void initState() {
     getData();
-    isDelete = false;
-    isVehicleDelete = false;
     super.initState();
   }
 
   void getData() async {
-    var url = "${apiURL}vehicle/getVehicleList";
+    String url = "${apiURL}vehicle/getVehicleList";
     setState(() {
       isLoading = true;
     });
     var responseData;
-    try {
-      Response response = await get(url);
-      print(response.body);
-      setState(() {
-        responseData = jsonDecode(response.body);
-      });
-    } catch (e) {
+    Response response =
+        await get(url, headers: {"Content-Type": "application/json"});
+    print(response.body);
+
+    setState(() {
+      responseData = jsonDecode(response.body);
+    });
+    bool success = await responseData['success'];
+
+    if (success) {
       setState(() {
         isLoading = false;
       });
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
+      setState(() {
+        vehiclesList = responseData["data"];
+      });
+    } else if (!success) {
+      String msg = await responseData['msg'];
+      setState(() {
+        isLoading = false;
+        vehiclesList = [];
+      });
+      showSnackBar(context, msg);
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      showSnackBar(context, "Something want wrong");
     }
-    setState(() {
-      vehiclesList = responseData["data"];
-    });
-
-    bool success = await responseData['success'];
-    print(success);
-    setState(() {
-      isLoading = false;
-    });
   }
 
   Future<void> _refresh() async {
@@ -69,6 +73,7 @@ class _VehiclesListState extends State<VehiclesList> {
   }
 
   void deleteVehicle(String vehicleNumber) async {
+    Navigator.pop(context);
     setState(() {
       isVehicleDelete = true;
     });
@@ -76,46 +81,49 @@ class _VehiclesListState extends State<VehiclesList> {
     if (isVehicleDelete == true) {
       buildDialog(context);
     }
-    print(vehicleNumber);
     var urlDeleteVehicle = "${apiURL}vehicle/deleteVehicle";
-    print(urlDeleteVehicle);
+    print("Delete vehicle URL is $urlDeleteVehicle");
+
     var responseToDeleteRequest;
     Map<String, String> deleteVehicle = {
       'vehicleNumber': vehicleNumber,
     };
-    try {
-      Response response = await post(urlDeleteVehicle, body: deleteVehicle);
-      print(response.body);
+
+    Response response = await post(urlDeleteVehicle, body: deleteVehicle);
+    print(response.statusCode);
+    print(response.body);
+    setState(() {
+      responseToDeleteRequest = jsonDecode(response.body);
+    });
+
+    bool success = responseToDeleteRequest["success"];
+    if (success == true) {
       setState(() {
-        responseToDeleteRequest = jsonDecode(response.body);
+        isVehicleDelete = false;
       });
-    } catch (e) {
+      if (!isVehicleDelete) {
+        Navigator.pop(context);
+      }
+      setState(() {
+        vehiclesList = [];
+      });
+      showSnackBar(context, "Vehicle Deleted Successfully");
+    } else if (success == false) {
       setState(() {
         isVehicleDelete = false;
       });
       if (isVehicleDelete == false) {
         Navigator.pop(context);
       }
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
-    }
-    bool success = responseToDeleteRequest["success"];
-    setState(() {
-      isVehicleDelete = false;
-    });
-    if (isVehicleDelete == false) {
-      Navigator.pop(context);
-    }
-    Navigator.pop(context);
-    if (success) {
-      _refresh();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Vehicle Deleted"),
-        duration: Duration(seconds: 3),
-      ));
+      showSnackBar(context, "Failed To Delete Vehicle");
+    } else {
+      setState(() {
+        isVehicleDelete = false;
+      });
+      if (isVehicleDelete == false) {
+        Navigator.pop(context);
+      }
+      showSnackBar(context, "Something want wrong");
     }
   }
 
@@ -128,6 +136,7 @@ class _VehiclesListState extends State<VehiclesList> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        key: vehicleListKey,
         backgroundColor: primaryColor,
         appBar: AppBar(
           centerTitle: true,
@@ -143,7 +152,7 @@ class _VehiclesListState extends State<VehiclesList> {
             InkWell(
               onTap: () {
                 setState(() {
-                  isDelete = (isDelete == false) ? true : false;
+                  isDeleteVisible = (isDeleteVisible == false) ? true : false;
                 });
               },
               child: Padding(
@@ -152,11 +161,7 @@ class _VehiclesListState extends State<VehiclesList> {
               ),
             ),
             InkWell(
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddVehicle(),
-                  )),
+              onTap: () => Navigator.pushNamed(context, '/AddVehicle'),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(4, 0, 10, 0),
                 child: Icon(Icons.add),
@@ -164,11 +169,11 @@ class _VehiclesListState extends State<VehiclesList> {
             ),
           ],
         ),
-        body: (vehiclesList.isNotEmpty)
-            ? RefreshIndicator(
-                key: _refreshIndicatorKey,
-                onRefresh: _refresh,
-                child: ListView.builder(
+        body: RefreshIndicator(
+          key: _refreshIndicatorKey,
+          onRefresh: _refresh,
+          child: (vehiclesList.isNotEmpty)
+              ? ListView.builder(
                   itemBuilder: (BuildContext context, int i) {
                     return GestureDetector(
                       onTap: () => Navigator.push(
@@ -197,7 +202,8 @@ class _VehiclesListState extends State<VehiclesList> {
                                 ),
                               ),
                               Visibility(
-                                visible: (isDelete == true) ? false : true,
+                                visible:
+                                    (isDeleteVisible == true) ? false : true,
                                 child: Padding(
                                   padding: const EdgeInsets.only(right: 20),
                                   child: Icon(
@@ -207,7 +213,7 @@ class _VehiclesListState extends State<VehiclesList> {
                                 ),
                               ),
                               Visibility(
-                                visible: isDelete,
+                                visible: isDeleteVisible,
                                 child: IconButton(
                                   padding: EdgeInsets.only(right: 20),
                                   icon: Icon(
@@ -237,25 +243,29 @@ class _VehiclesListState extends State<VehiclesList> {
                     );
                   },
                   itemCount: vehiclesList.length,
+                )
+              : ListView(
+                  children: [
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: EdgeInsets.fromLTRB(20, 40, 20, 10),
+                      child: (isLoading)
+                          ? Center(
+                              child: SpinKitThreeBounce(
+                                color: Colors.lightBlueAccent,
+                              ),
+                            )
+                          : Text(
+                              'No vehicle please Add Vehicle',
+                              style: myTextStyle.copyWith(
+                                fontSize: 30,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                    ),
+                  ],
                 ),
-              )
-            : Container(
-                alignment: Alignment.topCenter,
-                padding: EdgeInsets.fromLTRB(20, 40, 20, 10),
-                child: (isLoading)
-                    ? Center(
-                        child: SpinKitThreeBounce(
-                          color: Colors.lightBlueAccent,
-                        ),
-                      )
-                    : Text(
-                        'Not added vehicle yet, \n you can add vehicle by clicking Plus(+) Button on right corner',
-                        style: myTextStyle.copyWith(
-                          fontSize: 30,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-              ),
+        ),
       ),
     );
   }

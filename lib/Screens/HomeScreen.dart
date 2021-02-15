@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:vehicle_manager/Widgets/PageHelper.dart';
+import 'package:vehicle_manager/Helper/Colors.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
                   height: myHeight * 0.18,
                 ),
                 InkWell(
-                  onTap: () => Navigator.pushNamed(context, '/VehicleScreen'),
+                  onTap: () => Navigator.pushNamed(context, '/VehicleList'),
                   child: Image(
                     height: 250,
                     width: 250,
@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
                   height: 30,
                 ),
                 InkWell(
-                  onTap: () => Navigator.pushNamed(context, '/VehicleScreen'),
+                  onTap: () => Navigator.pushNamed(context, '/VehicleList'),
                   child: Image(
                     height: 200,
                     width: 200,

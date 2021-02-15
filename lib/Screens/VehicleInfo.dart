@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart';
-import 'package:vehicle_manager/Widgets/MyExpansion.dart';
-import 'package:vehicle_manager/Widgets/PageHelper.dart';
+import 'package:vehicle_manager/Helper/Colors.dart';
+import 'package:vehicle_manager/Helper/DeleteDialog.dart';
+import 'package:vehicle_manager/Helper/LoadingDialog.dart';
+import 'package:vehicle_manager/Helper/MyExpansion.dart';
+import 'package:vehicle_manager/Helper/PageHelper.dart';
+import 'package:vehicle_manager/Helper/TextFieldDecoration.dart';
 
 import '../Services/config.dart';
 
@@ -22,7 +26,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
 
   @override
   void initState() {
-    getData();
+    getVehicleInfo();
     setState(() {
       isRequesting = false;
     });
@@ -37,31 +41,24 @@ class _VehicleInfoState extends State<VehicleInfo> {
   var vehicleInfoData;
   String infoVehicleName, infoVehicleRC, infoVehicleOwner, infoVehicleType;
   //api request
-  void getData() async {
-    var urlInfo = "${apiURL}vehicle/getVehicleInfo";
+  void getVehicleInfo() async {
     setState(() {
       infoLoading = true;
     });
-    try {
-      Response response =
-          await post(urlInfo, body: {"vehicleNumber": vehicleNumber});
-      print(response.body);
-      setState(() {
-        vehicleInfoData = jsonDecode(response.body);
-      });
-      print('vehicle Info response = $vehicleInfoData');
-    } catch (e) {
-      setState(() {
-        infoLoading = false;
-      });
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
-    }
-    dynamic success = await vehicleInfoData['success'];
-    print(success);
+    var urlInfo = "${apiURL}vehicle/getVehicleInfo";
+    final body = jsonEncode({"vehicleNumber": vehicleNumber});
+    Map<String, String> header = {"Content-Type": "application/json"};
+
+    Response response = await post(urlInfo, body: body, headers: header);
+    print(response.statusCode);
+    print(response.body);
+
+    setState(() {
+      vehicleInfoData = jsonDecode(response.body);
+    });
+
+    bool success = await vehicleInfoData['success'];
+
     if (success == true) {
       setState(() {
         infoVehicleType = vehicleInfoData["data"]["VehicleType"];
@@ -69,15 +66,10 @@ class _VehicleInfoState extends State<VehicleInfo> {
         infoVehicleRC = vehicleInfoData["data"]["VehicleRC"];
         infoVehicleName = vehicleInfoData["data"]["VehicleName"];
       });
+    } else if (success == false) {
+      String msg = await vehicleInfoData['msg'];
+      showSnackBar(context, msg);
     }
-
-    if (success == false) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(vehicleInfoData["msg"]),
-        duration: Duration(seconds: 4),
-      ));
-    }
-
     setState(() {
       infoLoading = false;
     });
@@ -129,34 +121,26 @@ class _VehicleInfoState extends State<VehicleInfo> {
     setState(() {
       isRequesting = true;
     });
-    Map<String, String> addMaintenanceModel = {
+    final addMaintenanceModel = jsonEncode({
       'vehicleNumber': vehicleNumber,
       'repairCost': amount,
       'repairText': description,
-    };
+    });
+    Map<String, String> header = {"Content-Type": "application/json"};
 
-    try {
-      Response response =
-          await post(urlAddMaintenance, body: addMaintenanceModel);
-      print(response.body);
-      setState(() {
-        responseToAddRequest = jsonDecode(response.body);
-      });
-    } catch (e) {
-      setState(() {
-        isRequesting = false;
-      });
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
-    }
+    Response response = await post(urlAddMaintenance,
+        body: addMaintenanceModel, headers: header);
+    print(response.statusCode);
+    print(response.body);
+
     setState(() {
-      isRequesting = false;
+      responseToAddRequest = jsonDecode(response.body);
     });
 
     bool success = responseToAddRequest["success"];
+    setState(() {
+      isRequesting = false;
+    });
 
     if (success == true) {
       showDialog(
@@ -233,63 +217,115 @@ class _VehicleInfoState extends State<VehicleInfo> {
               ],
             );
           });
+    } else if (success == false) {
+      String msg = responseToAddRequest["msg"];
+      showSnackBar(context, msg);
+    } else {
+      showSnackBar(context, "Something want wrong");
     }
   }
 
   //TODO:History section
   List repairHistoryList = [];
-  bool getHistoryOnce = true, loadHistory = true;
+  bool getHistoryOnce = true, loadHistory = true, isRecordDelete = false;
   String repairVehicleName, repairDate, repairDescription, repairAmount;
   int repairId, repairTotalAmount;
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
-  var urlHistory = "${apiURL}vehicle/getRepairHistory";
-
   void getRepairHistory() async {
     var responseHistoryData;
-    try {
-      Response response =
-          await post(urlHistory, body: {"vehicleNumber": vehicleNumber});
-      print(response.body);
-      setState(() {
-        responseHistoryData = jsonDecode(response.body);
-      });
-      print('this is response data from History $responseHistoryData');
-    } catch (e) {
-      setState(() {
-        loadHistory = false;
-      });
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
-    }
-    dynamic success = responseHistoryData['success'];
+    String urlHistory = "${apiURL}vehicle/getRepairHistory";
+    print("URL for history is $urlHistory");
+
+    final body = jsonEncode({"vehicleNumber": vehicleNumber});
+    Map<String, String> header = {"Content-Type": "application/json"};
+
+    Response response = await post(urlHistory, body: body, headers: header);
+    print(response.statusCode);
+    print(response.body);
+
+    setState(() {
+      responseHistoryData = jsonDecode(response.body);
+    });
+
+    bool success = await responseHistoryData['success'];
     if (success == true) {
       setState(() {
         repairHistoryList = responseHistoryData['data'];
       });
-      // repairHistoryList.sort((a, b) {
-      //   var sort =
-      //       b["repairDate"].toString().compareTo(a["repairDate"].toString());
-      //   return sort;
-      // });
+      setState(() {
+        loadHistory = false;
+        getHistoryOnce = false;
+      });
+    } else if (success == false) {
+      String msg = await responseHistoryData['msg'];
+      setState(() {
+        loadHistory = false;
+        getHistoryOnce = false;
+      });
+      showSnackBar(context, msg);
+    } else {
+      setState(() {
+        loadHistory = false;
+        getHistoryOnce = false;
+      });
+      showSnackBar(context, "Something want wrong");
     }
-
-    setState(() {
-      loadHistory = false;
-      getHistoryOnce = false;
-    });
   }
 
-  void setVehicleHistory(int i) async {
-    repairAmount = repairHistoryList[i]['amount'];
-    repairId = repairHistoryList[i]['repairId'];
-    repairDate = repairHistoryList[i]['repairDate'];
-    repairVehicleName = repairHistoryList[i]['vehicleName'];
-    repairDescription = repairHistoryList[i]['description'];
+  void deleteRepairRecord(int repairID) async {
+    setState(() {
+      isRecordDelete = true;
+    });
+    if (isRecordDelete == true) {
+      buildDialog(context);
+    }
+
+    var responseDeleteRecord;
+    String urlDeleteRecord = "${apiURL}vehicle/deleteRepairRecord";
+    print("URL for history is $urlDeleteRecord");
+
+    final body = jsonEncode({"repairID": repairID});
+    Map<String, String> header = {"Content-Type": "application/json"};
+
+    Response response =
+        await post(urlDeleteRecord, body: body, headers: header);
+    print(response.statusCode);
+    print(response.body);
+
+    setState(() {
+      responseDeleteRecord = jsonDecode(response.body);
+    });
+
+    bool success = await responseDeleteRecord['success'];
+
+    if (success == true) {
+      setState(() {
+        isRecordDelete = false;
+      });
+      if (isRecordDelete == false) {
+        Navigator.pop(context);
+      }
+      showSnackBar(context, "delete success");
+    } else if (success == false) {
+      String msg = await responseDeleteRecord['msg'];
+      setState(() {
+        isRecordDelete = false;
+      });
+      if (isRecordDelete == false) {
+        Navigator.pop(context);
+      }
+      showSnackBar(context, msg);
+    } else {
+      setState(() {
+        isRecordDelete = false;
+      });
+      if (isRecordDelete == false) {
+        Navigator.pop(context);
+      }
+      showSnackBar(context, "Something want wrong");
+    }
   }
 
   Future<void> _refresh() async {
@@ -303,6 +339,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
 
   @override
   Widget build(BuildContext context) {
+    double myHeight = MediaQuery.of(context).size.height;
     return SafeArea(
       child: DefaultTabController(
         initialIndex: 0,
@@ -694,96 +731,117 @@ class _VehicleInfoState extends State<VehicleInfo> {
                   ),
                   Container(
                     child: RefreshIndicator(
-                      key: _refreshIndicatorKey,
-                      onRefresh: _refresh,
-                      child: (repairHistoryList.isNotEmpty)
-                          ? CustomScrollView(
-                              slivers: [
-                                if (repairHistoryList.isNotEmpty)
-                                  SliverList(
-                                    delegate: SliverChildListDelegate([
-                                      Container(
-                                        width:
-                                            MediaQuery.of(context).size.width,
-                                        height: 100,
-                                        child: Card(
-                                          elevation: 5,
-                                          color: textWhite,
-                                          child: Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                                20, 0, 20, 0),
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    'Total',
+                        key: _refreshIndicatorKey,
+                        onRefresh: _refresh,
+                        child: (repairHistoryList.isNotEmpty)
+                            ? CustomScrollView(
+                                slivers: [
+                                  if (repairHistoryList.isNotEmpty)
+                                    SliverList(
+                                      delegate: SliverChildListDelegate([
+                                        Container(
+                                          width:
+                                              MediaQuery.of(context).size.width,
+                                          height: 100,
+                                          child: Card(
+                                            elevation: 5,
+                                            color: textWhite,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      20, 0, 20, 0),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Total',
+                                                      style:
+                                                          myTextStyle.copyWith(
+                                                        fontSize: 30,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    "${repairHistoryList.last['totalAmount']}",
                                                     style: myTextStyle.copyWith(
                                                       fontSize: 30,
                                                     ),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  "${repairHistoryList.last['totalAmount']}",
-                                                  style: myTextStyle.copyWith(
-                                                    fontSize: 30,
-                                                  ),
-                                                )
-                                              ],
+                                                  )
+                                                ],
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ]),
+                                      ]),
+                                    ),
+                                  SliverList(
+                                    delegate: SliverChildBuilderDelegate(
+                                        (context, i) {
+                                      repairAmount =
+                                          repairHistoryList[i]['amount'];
+                                      repairId =
+                                          repairHistoryList[i]['repairId'];
+                                      repairDate =
+                                          repairHistoryList[i]['repairDate'];
+                                      repairVehicleName =
+                                          repairHistoryList[i]['vehicleName'];
+                                      repairDescription =
+                                          repairHistoryList[i]['description'];
+                                      return MyExpansion(
+                                        repairId: (repairId == null)
+                                            ? '-'
+                                            : repairId.toString(),
+                                        vehicleName: (repairVehicleName == null)
+                                            ? '-'
+                                            : repairVehicleName,
+                                        amount: (repairAmount == null)
+                                            ? '-'
+                                            : repairAmount,
+                                        date: (repairDate == null)
+                                            ? '-'
+                                            : repairDate,
+                                        description: (repairDescription == null)
+                                            ? '-'
+                                            : repairDescription,
+                                        delete: () => showDialog(
+                                            context: context,
+                                            barrierDismissible: false,
+                                            builder: (context) {
+                                              return deleteDialog(
+                                                titleText:
+                                                    'Are you sure to delete ($repairId) maintenance report of rupees $repairAmount',
+                                                ifYes: () => deleteRepairRecord(
+                                                    repairId),
+                                                ifNo: () =>
+                                                    Navigator.pop(context),
+                                              );
+                                            }),
+                                      );
+                                    },
+                                        childCount:
+                                            repairHistoryList.length - 1),
                                   ),
-                                SliverList(
-                                  delegate:
-                                      SliverChildBuilderDelegate((context, i) {
-                                    setVehicleHistory(i);
-                                    return MyExpansion(
-                                      repairId: (repairId == null)
-                                          ? '-'
-                                          : repairId.toString(),
-                                      vehicleName: (repairVehicleName == null)
-                                          ? '-'
-                                          : repairVehicleName,
-                                      amount: (repairAmount == null)
-                                          ? '-'
-                                          : repairAmount,
-                                      date: (repairDate == null)
-                                          ? '-'
-                                          : repairDate,
-                                      description: (repairDescription == null)
-                                          ? '-'
-                                          : repairDescription,
-                                      delete: () => showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (context) {
-                                            return deleteDialog(
-                                              titleText:
-                                                  'Are you sure to delete this repair',
-                                              ifYes: () {},
-                                              ifNo: () =>
-                                                  Navigator.pop(context),
-                                            );
-                                          }),
-                                    );
-                                  }, childCount: repairHistoryList.length - 1),
-                                ),
-                              ],
-                            )
-                          : (loadHistory)
-                              ? Center(
-                                  child: SpinKitThreeBounce(
-                                    color: Colors.lightBlueAccent,
+                                ],
+                              )
+                            : ListView(
+                                children: [
+                                  SizedBox(
+                                    height: myHeight * 0.35,
                                   ),
-                                )
-                              : Center(
-                                  child: Text(
-                                  'No Maintenance Done Yet',
-                                  style: myTextStyle.copyWith(fontSize: 30),
-                                )),
-                    ),
+                                  (loadHistory)
+                                      ? Center(
+                                          child: SpinKitThreeBounce(
+                                            color: Colors.lightBlueAccent,
+                                          ),
+                                        )
+                                      : Center(
+                                          child: Text(
+                                          'No Maintenance Done Yet',
+                                          style: myTextStyle.copyWith(
+                                              fontSize: 30),
+                                        )),
+                                ],
+                              )),
                   ),
                 ],
               ),

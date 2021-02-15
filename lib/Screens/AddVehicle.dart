@@ -1,8 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
-import 'package:vehicle_manager/Widgets/PageHelper.dart';
+import 'package:vehicle_manager/Helper/Colors.dart';
+import 'package:vehicle_manager/Helper/LoadingDialog.dart';
+import 'package:vehicle_manager/Helper/PageHelper.dart';
+import 'package:vehicle_manager/Helper/TextFieldDecoration.dart';
 import 'package:vehicle_manager/Services/config.dart';
 
 class AddVehicle extends StatefulWidget {

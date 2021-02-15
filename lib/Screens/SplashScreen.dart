@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_session/flutter_session.dart';
-import 'package:vehicle_manager/Widgets/PageHelper.dart';
+import 'package:vehicle_manager/Helper/Colors.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -9,7 +9,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  dynamic userData;
+  var userData;
 
   @override
   void initState() {

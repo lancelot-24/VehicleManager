@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_session/flutter_session.dart';
 import 'package:http/http.dart';
-import 'package:vehicle_manager/Model/UserData.dart';
-import 'package:vehicle_manager/Widgets/PageHelper.dart';
+import 'package:vehicle_manager/Helper/Colors.dart';
+import 'package:vehicle_manager/Helper/LoadingDialog.dart';
+import 'package:vehicle_manager/Helper/PageHelper.dart';
+import 'package:vehicle_manager/Helper/TextFieldDecoration.dart';
 import 'file:///C:/Users/Niket/AndroidStudioProjects/vehicle_manager/lib/Services/config.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:vehicle_manager/Services/SessionService.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -29,16 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    setState(() {
-      _isLoading = false;
-    });
-    super.dispose();
-  }
-
-  var url = "${apiURL}userLogin";
-
   bool validate() {
     final form = formKey.currentState;
     if (form.validate()) {
@@ -46,12 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return true;
     } else {
       return false;
-    }
-  }
-
-  void onSubmit() {
-    if (validate()) {
-      sendAuthRequest();
     }
   }
 
@@ -64,48 +50,31 @@ class _LoginScreenState extends State<LoginScreen> {
       buildDialog(context);
     }
 
+    String url = "${apiURL}userLogin";
     print('url is $url');
-    Map<String, String> userData = {
-      'userName': _userName,
-      'userPassword': _password,
-    };
 
-    try {
-      Response response = await post(url, body: userData);
-      print(response.body);
-      setState(() {
-        userAuthCheck = jsonDecode(response.body);
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (_isLoading == false) {
-        Navigator.pop(context);
-      }
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
-    }
+    final sendAuthDate = jsonEncode({
+      "userName": _userName,
+      "userPassword": _password,
+    });
+    Map<String, String> header = {"Content-Type": "application/json"};
 
-    checkUserAuth();
-  }
+    Response response = await post(url, body: sendAuthDate, headers: header);
+    print(response.statusCode);
+    print(response.body);
 
-  void checkUserAuth() async {
-    //authentication check
+    setState(() {
+      userAuthCheck = jsonDecode(response.body);
+    });
     bool success = await userAuthCheck['success'];
-
-    //for flutter session
-    String name = await userAuthCheck['data']['name'];
-    int uid = await userAuthCheck['data']['uid'];
-
-    await saveData(uid, name);
-
-    //authentication check and then nevigate to next page
-    print(success);
+    print('Auth request success = $success');
     if (success) {
+      //flutter session saving data
+      String userName = await userAuthCheck['data']['name'];
+      int uID = await userAuthCheck['data']['uid'];
+      await saveData(uID, userName);
+
+      //Navigate to next page
       setState(() {
         _isLoading = false;
       });
@@ -113,25 +82,23 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pop(context);
       }
       Navigator.pushReplacementNamed(context, '/HomeScreen');
-    } else {
+    } else if (!success) {
+      String msg = await userAuthCheck['msg'];
       setState(() {
         _isLoading = false;
       });
       if (_isLoading == false) {
         Navigator.pop(context);
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Wrong Username or Password'),
-        duration: Duration(seconds: 3),
-      ));
+      showSnackBar(context, msg);
+    } else {
+      showSnackBar(context, "Something want wrong");
     }
   }
 
-  //for user session data
-  Future<void> saveData(int uid, String name) async {
-    UserData userData = UserData(uid: uid, name: name);
-
-    await FlutterSession().set('userData', userData);
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -227,7 +194,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.only(right: 30),
                             child: MaterialButton(
                               padding: EdgeInsets.all(0),
-                              onPressed: onSubmit,
+                              onPressed: () {
+                                if (validate()) {
+                                  sendAuthRequest();
+                                }
+                              },
                               color: secondaryColor,
                               height: 70,
                               minWidth: 70,

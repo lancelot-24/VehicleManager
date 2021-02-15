@@ -1,13 +1,18 @@
-class UserData {
-  final String name;
-  final int uid;
+import 'package:flutter/cupertino.dart';
 
-  UserData({this.name, this.uid});
+class UserData {
+  final String userName;
+  final int uID;
+
+  UserData({
+    @required this.userName,
+    @required this.uID,
+  });
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'uid': uid,
+      'userName': userName,
+      'uid': uID,
     };
   }
 }
