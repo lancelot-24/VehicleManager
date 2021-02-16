@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,10 +7,8 @@ import 'package:http/http.dart';
 import 'package:vehicle_manager/Helper/Colors.dart';
 import 'package:vehicle_manager/Helper/DeleteDialog.dart';
 import 'package:vehicle_manager/Helper/LoadingDialog.dart';
-import 'package:vehicle_manager/Helper/MyExpansion.dart';
 import 'package:vehicle_manager/Helper/PageHelper.dart';
-import 'package:vehicle_manager/Helper/TextFieldDecoration.dart';
-
+import 'file:///C:/Users/Niket/AndroidStudioProjects/vehicle_manager/lib/Screens/AddMaintenance.dart';
 import '../Services/config.dart';
 
 class VehicleInfo extends StatefulWidget {
@@ -27,9 +26,6 @@ class _VehicleInfoState extends State<VehicleInfo> {
   @override
   void initState() {
     getVehicleInfo();
-    setState(() {
-      isRequesting = false;
-    });
     super.initState();
   }
 
@@ -99,142 +95,19 @@ class _VehicleInfoState extends State<VehicleInfo> {
     }
   }
 
-  //TODO:maintenance section
-  final formKey = GlobalKey<FormState>();
-  String _amount, _description;
-  bool isRequesting = false;
-  var responseToAddRequest;
-  //validate function for form
-  bool validate() {
-    final form = formKey.currentState;
-    if (form.validate()) {
-      form.save();
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  //on submit send request
-  void sendAddRequest(String amount, String description) async {
-    var urlAddMaintenance = "${apiURL}vehicle/addNewMaintainance";
-    setState(() {
-      isRequesting = true;
-    });
-    final addMaintenanceModel = jsonEncode({
-      'vehicleNumber': vehicleNumber,
-      'repairCost': amount,
-      'repairText': description,
-    });
-    Map<String, String> header = {"Content-Type": "application/json"};
-
-    Response response = await post(urlAddMaintenance,
-        body: addMaintenanceModel, headers: header);
-    print(response.statusCode);
-    print(response.body);
-
-    setState(() {
-      responseToAddRequest = jsonDecode(response.body);
-    });
-
-    bool success = responseToAddRequest["success"];
-    setState(() {
-      isRequesting = false;
-    });
-
-    if (success == true) {
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return SimpleDialog(
-              title: Text(
-                'Maintenance Added',
-              ),
-              backgroundColor: secondaryColor,
-              titleTextStyle:
-                  myTextStyle.copyWith(color: textWhite, fontSize: 24),
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Maintenance ID = ${responseToAddRequest["data"]["id"]}',
-                      textAlign: TextAlign.center,
-                      style:
-                          myTextStyle.copyWith(color: textWhite, fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      'Maintenance Date = ${responseToAddRequest["data"]["MaintainanceDate"]}',
-                      textAlign: TextAlign.center,
-                      style:
-                          myTextStyle.copyWith(color: textWhite, fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      'Vehicle Number = ${responseToAddRequest["data"]["VehicleNumber"]}',
-                      textAlign: TextAlign.center,
-                      style:
-                          myTextStyle.copyWith(color: textWhite, fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      'Amount = ${responseToAddRequest["data"]["RepairCost"]}',
-                      textAlign: TextAlign.center,
-                      style:
-                          myTextStyle.copyWith(color: textWhite, fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      'Description = ${responseToAddRequest["data"]["RepairDescription"]}',
-                      textAlign: TextAlign.center,
-                      style:
-                          myTextStyle.copyWith(color: textWhite, fontSize: 18),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    TextButton(
-                      child: Text(
-                        'OK',
-                        textAlign: TextAlign.center,
-                        style: myTextStyle.copyWith(
-                            color: textWhite, fontSize: 24),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          });
-    } else if (success == false) {
-      String msg = responseToAddRequest["msg"];
-      showSnackBar(context, msg);
-    } else {
-      showSnackBar(context, "Something want wrong");
-    }
-  }
-
   //TODO:History section
   List repairHistoryList = [];
+
   bool getHistoryOnce = true, loadHistory = true, isRecordDelete = false;
-  String repairVehicleName, repairDate, repairDescription, repairAmount;
-  int repairId, repairTotalAmount;
+
+  int repairTotalAmount;
+
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
 
   void getRepairHistory() async {
     var responseHistoryData;
+    List tempList = [];
     String urlHistory = "${apiURL}vehicle/getRepairHistory";
     print("URL for history is $urlHistory");
 
@@ -252,8 +125,12 @@ class _VehicleInfoState extends State<VehicleInfo> {
     bool success = await responseHistoryData['success'];
     if (success == true) {
       setState(() {
-        repairHistoryList = responseHistoryData['data'];
+        tempList = responseHistoryData['data'];
+        repairTotalAmount = tempList.last['totalAmount'];
+        repairHistoryList =
+            List.from(tempList.getRange(0, tempList.length - 1));
       });
+      print(repairHistoryList);
       setState(() {
         loadHistory = false;
         getHistoryOnce = false;
@@ -261,6 +138,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
     } else if (success == false) {
       String msg = await responseHistoryData['msg'];
       setState(() {
+        repairHistoryList = [];
         loadHistory = false;
         getHistoryOnce = false;
       });
@@ -275,6 +153,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
   }
 
   void deleteRepairRecord(int repairID) async {
+    print(repairID);
     Navigator.pop(context);
     setState(() {
       isRecordDelete = true;
@@ -308,6 +187,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
       if (isRecordDelete == false) {
         Navigator.pop(context);
       }
+      getRepairHistory();
       showSnackBar(context, "delete success");
     } else if (success == false) {
       String msg = await responseDeleteRecord['msg'];
@@ -617,119 +497,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
                             ],
                           ),
                   ),
-                  Container(
-                    child: (isRequesting)
-                        ? Center(
-                            child: SpinKitThreeBounce(
-                              color: Colors.lightBlueAccent,
-                            ),
-                          )
-                        : SingleChildScrollView(
-                            child: Center(
-                              child: SizedBox(
-                                width: 300,
-                                child: Form(
-                                  key: formKey,
-                                  child: Column(
-                                    children: [
-                                      SizedBox(
-                                        height: 100,
-                                      ),
-                                      TextFormField(
-                                        textAlign: TextAlign.center,
-                                        style: myTextStyle.copyWith(
-                                          fontSize: 22.0,
-                                        ),
-                                        decoration: buildSignUpInputDecoration(
-                                                vehicleNumber)
-                                            .copyWith(
-                                          disabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              borderSide: BorderSide(
-                                                  color: secondaryColor,
-                                                  width: 1)),
-                                        ),
-                                        enabled: false,
-                                      ),
-                                      SizedBox(
-                                        height: 50,
-                                      ),
-                                      TextFormField(
-                                        validator: (value) {
-                                          if (value.isEmpty) {
-                                            return "Amount can't be empty";
-                                          }
-                                          return null;
-                                        },
-                                        keyboardType: TextInputType.number,
-                                        style:
-                                            myTextStyle.copyWith(fontSize: 22),
-                                        decoration:
-                                            buildSignUpInputDecoration('Amount')
-                                                .copyWith(
-                                          prefix:
-                                              Icon(FontAwesomeIcons.rupeeSign),
-                                        ),
-                                        onSaved: (value) => _amount = value,
-                                      ),
-                                      SizedBox(
-                                        height: 30,
-                                      ),
-                                      TextFormField(
-                                        validator: (value) {
-                                          if (value.isEmpty) {
-                                            return "Description can't be empty";
-                                          }
-                                          return null;
-                                        },
-                                        style: myTextStyle.copyWith(
-                                          fontSize: 22,
-                                        ),
-                                        maxLines: 4,
-                                        decoration: buildSignUpInputDecoration(
-                                                'Description')
-                                            .copyWith(),
-                                        onSaved: (value) =>
-                                            _description = value,
-                                      ),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Card(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
-                                        elevation: 5,
-                                        child: MaterialButton(
-                                          height: 50,
-                                          minWidth: 300,
-                                          elevation: 5,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12)),
-                                          onPressed: () {
-                                            if (validate()) {
-                                              sendAddRequest(
-                                                  _amount, _description);
-                                            }
-                                          },
-                                          child: Text(
-                                            'SUBMIT',
-                                            style: myTextStyle.copyWith(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                  ),
+                  AddMaintenance(vehicleNumber: vehicleNumber),
                   Container(
                     child: RefreshIndicator(
                         key: _refreshIndicatorKey,
@@ -763,7 +531,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                                     ),
                                                   ),
                                                   Text(
-                                                    "${repairHistoryList.last['totalAmount']}",
+                                                    "₹$repairTotalAmount",
                                                     style: myTextStyle.copyWith(
                                                       fontSize: 30,
                                                     ),
@@ -777,51 +545,148 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                     ),
                                   SliverList(
                                     delegate: SliverChildBuilderDelegate(
-                                        (context, i) {
-                                      repairAmount =
-                                          repairHistoryList[i]['amount'];
-                                      repairId =
-                                          repairHistoryList[i]['repairId'];
-                                      repairDate =
-                                          repairHistoryList[i]['repairDate'];
-                                      repairVehicleName =
-                                          repairHistoryList[i]['vehicleName'];
-                                      repairDescription =
-                                          repairHistoryList[i]['description'];
-                                      return MyExpansion(
-                                        repairId: (repairId == null)
-                                            ? '-'
-                                            : repairId.toString(),
-                                        vehicleName: (repairVehicleName == null)
-                                            ? '-'
-                                            : repairVehicleName,
-                                        amount: (repairAmount == null)
-                                            ? '-'
-                                            : repairAmount,
-                                        date: (repairDate == null)
-                                            ? '-'
-                                            : repairDate,
-                                        description: (repairDescription == null)
-                                            ? '-'
-                                            : repairDescription,
-                                        delete: () => showDialog(
-                                            context: context,
-                                            barrierDismissible: false,
-                                            builder: (context) {
-                                              return deleteDialog(
-                                                titleText:
-                                                    'Are you sure to delete ($repairId) maintenance report of rupees $repairAmount',
-                                                ifYes: () => deleteRepairRecord(
-                                                    repairId),
-                                                ifNo: () =>
-                                                    Navigator.pop(context),
-                                              );
-                                            }),
-                                      );
-                                    },
-                                        childCount:
-                                            repairHistoryList.length - 1),
-                                  ),
+                                      (BuildContext context, int i) {
+                                        return Dismissible(
+                                          key: UniqueKey(),
+                                          direction:
+                                              DismissDirection.endToStart,
+                                          confirmDismiss: (isDismiss) {
+                                            print("tried");
+                                            showDialog(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (context) {
+                                                  return deleteDialog(
+                                                    titleText:
+                                                        "Are you sure to delete (${repairHistoryList[i]['repairId'].toString()}) maintenance report of rupees ₹${repairHistoryList[i]['amount']}",
+                                                    ifYes: () =>
+                                                        deleteRepairRecord(
+                                                            repairHistoryList[i]
+                                                                ['repairId']),
+                                                    ifNo: () =>
+                                                        Navigator.pop(context),
+                                                  );
+                                                });
+                                            return null;
+                                          },
+                                          background: Container(
+                                            color: redWhite,
+                                            child: Icon(Icons.delete),
+                                          ),
+                                          child: Card(
+                                            elevation: 5,
+                                            child: ExpansionTile(
+                                              tilePadding: EdgeInsets.fromLTRB(
+                                                  6, 2, 10, 2),
+                                              title: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          'Repair ID',
+                                                          style: myTextStyle
+                                                              .copyWith(
+                                                                  fontSize: 10),
+                                                        ),
+                                                        Text(
+                                                          '${repairHistoryList[i]['repairId'].toString()} - ${repairHistoryList[i]['vehicleName']}',
+                                                          style: myTextStyle
+                                                              .copyWith(
+                                                                  fontSize: 14),
+                                                        ),
+                                                        SizedBox(
+                                                          height: 5,
+                                                        ),
+                                                        Text(
+                                                          'Date',
+                                                          style: myTextStyle
+                                                              .copyWith(
+                                                                  fontSize: 10),
+                                                        ),
+                                                        Text(
+                                                          "${repairHistoryList[i]['repairDate']}",
+                                                          style: myTextStyle
+                                                              .copyWith(
+                                                                  fontSize: 24),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        'Amount',
+                                                        style: myTextStyle
+                                                            .copyWith(
+                                                                fontSize: 10),
+                                                      ),
+                                                      Text(
+                                                        '₹${repairHistoryList[i]['amount']}',
+                                                        style: myTextStyle
+                                                            .copyWith(
+                                                                fontSize: 18),
+                                                      ),
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                              childrenPadding:
+                                                  EdgeInsets.fromLTRB(
+                                                      6, 2, 6, 4),
+                                              children: [
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          'Description',
+                                                          style: myTextStyle
+                                                              .copyWith(
+                                                                  fontSize: 10),
+                                                        ),
+                                                        SizedBox(
+                                                          height: 4,
+                                                        ),
+                                                        SizedBox(
+                                                          width: 300,
+                                                          height: 60,
+                                                          child: Text(
+                                                            "${repairHistoryList[i]['description']}",
+                                                            softWrap: true,
+                                                            maxLines: 3,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: myTextStyle
+                                                                .copyWith(
+                                                                    fontSize:
+                                                                        16),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      childCount: repairHistoryList.length,
+                                    ),
+                                  )
                                 ],
                               )
                             : ListView(
