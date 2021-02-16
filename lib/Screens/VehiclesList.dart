@@ -27,11 +27,11 @@ class _VehiclesListState extends State<VehiclesList> {
 
   @override
   void initState() {
-    getData();
+    getVehicleList();
     super.initState();
   }
 
-  void getData() async {
+  void getVehicleList() async {
     String url = "${apiURL}vehicle/getVehicleList";
     setState(() {
       isLoading = true;
@@ -50,6 +50,7 @@ class _VehiclesListState extends State<VehiclesList> {
       setState(() {
         isLoading = false;
       });
+
       setState(() {
         vehiclesList = responseData["data"];
       });
@@ -69,7 +70,7 @@ class _VehiclesListState extends State<VehiclesList> {
   }
 
   Future<void> _refresh() async {
-    getData();
+    getVehicleList();
   }
 
   void deleteVehicle(String vehicleNumber) async {
@@ -104,9 +105,7 @@ class _VehiclesListState extends State<VehiclesList> {
       if (!isVehicleDelete) {
         Navigator.pop(context);
       }
-      setState(() {
-        vehiclesList = [];
-      });
+      getVehicleList();
       showSnackBar(context, "Vehicle Deleted Successfully");
     } else if (success == false) {
       setState(() {

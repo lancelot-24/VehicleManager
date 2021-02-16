@@ -275,6 +275,7 @@ class _VehicleInfoState extends State<VehicleInfo> {
   }
 
   void deleteRepairRecord(int repairID) async {
+    Navigator.pop(context);
     setState(() {
       isRecordDelete = true;
     });
