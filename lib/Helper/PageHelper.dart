@@ -20,40 +20,6 @@ Future<DateTime> datePicker(
   return picked;
 }
 
-//vehicle info cards fixed
-Widget gridCard({String title, String data, Color cardColor}) {
-  return Card(
-    elevation: 5,
-    color: cardColor,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: myTextStyle.copyWith(
-              fontSize: 14,
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: Text(
-                data,
-                textAlign: TextAlign.center,
-                style: myTextStyle.copyWith(
-                    fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 //Tab Widget
 Widget myTab(String text, IconData icon) {
   return Tab(

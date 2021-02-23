@@ -5,6 +5,7 @@ import 'package:vehicle_manager/Helper/Colors.dart';
 import 'package:vehicle_manager/Helper/LoadingDialog.dart';
 import 'package:vehicle_manager/Helper/PageHelper.dart';
 import 'package:vehicle_manager/Helper/TextFieldDecoration.dart';
+import 'package:vehicle_manager/Services/SessionService.dart';
 import 'package:vehicle_manager/Services/config.dart';
 
 class AddVehicle extends StatefulWidget {
@@ -13,8 +14,8 @@ class AddVehicle extends StatefulWidget {
 }
 
 class _AddVehicleState extends State<AddVehicle> {
-  String vehicleNumber, vehicleType, vehicleName, vehicleOwner, vehicleRC;
-  final formKey = GlobalKey<FormState>();
+  String _vehicleNumber, _vehicleType, _vehicleName, _vehicleOwner, _vehicleRC;
+  final _formKey = GlobalKey<FormState>();
   bool _isAddLoading;
 
   @override
@@ -26,7 +27,7 @@ class _AddVehicleState extends State<AddVehicle> {
   }
 
   bool validate() {
-    final form = formKey.currentState;
+    final form = _formKey.currentState;
     if (form.validate()) {
       form.save();
       return true;
@@ -34,8 +35,6 @@ class _AddVehicleState extends State<AddVehicle> {
       return false;
     }
   }
-
-  var responseToAddRequest;
 
   void addVehicle() async {
     setState(() {
@@ -45,51 +44,59 @@ class _AddVehicleState extends State<AddVehicle> {
     if (_isAddLoading == true) {
       buildDialog(context);
     }
-    print('in1');
-    var urlAddVehicle = "${apiURL}vehicle/registerVehicle";
-    Map<String, String> addVehicle = {
-      'vehicleNumber': vehicleNumber,
-      'vehicleType': vehicleType,
-      'vehicleOwner': vehicleOwner,
-      'vehicleName': vehicleName,
-      'vehicleRC': vehicleRC,
-    };
-    print('in2');
 
-    try {
-      Response response = await post(urlAddVehicle, body: addVehicle);
+    var _responseData;
+    String _url = "${apiURL}vehicle/registerVehicle";
 
-      print(response.body);
+    String _userName = await getUserName();
+    Map<String, String> _header = {"Content-Type": "application/json"};
+    var _body = jsonEncode({
+      'userName': _userName,
+      'vehicleNumber': _vehicleNumber,
+      'vehicleType': _vehicleType,
+      'vehicleOwner': _vehicleOwner,
+      'vehicleName': _vehicleName,
+      'vehicleRC': (_vehicleRC != null) ? _vehicleRC : null,
+    });
 
-      setState(() {
-        responseToAddRequest = jsonDecode(response.body);
-      });
-    } catch (e) {
+    Response response = await post(_url, body: _body, headers: _header);
+    print(response.statusCode);
+    print(response.body);
+
+    setState(() {
+      _responseData = jsonDecode(response.body);
+    });
+
+    bool _success = await _responseData['success'];
+
+    if (_success) {
       setState(() {
         _isAddLoading = false;
       });
-      if (_isAddLoading == false) {
+
+      if (!_isAddLoading) {
         Navigator.pop(context);
       }
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        duration: Duration(seconds: 6),
-      ));
-    }
-    bool success = responseToAddRequest["success"];
+      VehicleData();
+    } else if (!_success) {
+      String msg = await _responseData['msg'];
+      setState(() {
+        _isAddLoading = false;
+      });
 
-    setState(() {
-      _isAddLoading = false;
-    });
-    if (_isAddLoading == false) {
-      Navigator.pop(context);
-    }
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Vehicle Added'),
-        duration: Duration(seconds: 3),
-      ));
+      if (!_isAddLoading) {
+        Navigator.pop(context);
+      }
+      showSnackBar(context, msg);
+    } else {
+      setState(() {
+        _isAddLoading = false;
+      });
+
+      if (!_isAddLoading) {
+        Navigator.pop(context);
+      }
+      showSnackBar(context, "Something want wrong");
     }
   }
 
@@ -120,7 +127,7 @@ class _AddVehicleState extends State<AddVehicle> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
             child: Form(
-              key: formKey,
+              key: _formKey,
               child: Column(
                 children: [
                   TextFormField(
@@ -132,7 +139,7 @@ class _AddVehicleState extends State<AddVehicle> {
                     },
                     style: myTextStyle.copyWith(fontSize: 22),
                     decoration: buildSignUpInputDecoration('Vehicle Number *'),
-                    onSaved: (value) => vehicleNumber = value,
+                    onSaved: (value) => _vehicleNumber = value,
                   ),
                   SizedBox(
                     height: 15,
@@ -148,7 +155,7 @@ class _AddVehicleState extends State<AddVehicle> {
                       fontSize: 22,
                     ),
                     decoration: buildSignUpInputDecoration('Vehicle Type *'),
-                    onSaved: (value) => vehicleType = value,
+                    onSaved: (value) => _vehicleType = value,
                   ),
                   SizedBox(
                     height: 15,
@@ -164,7 +171,7 @@ class _AddVehicleState extends State<AddVehicle> {
                       fontSize: 22,
                     ),
                     decoration: buildSignUpInputDecoration('Vehicle Name *'),
-                    onSaved: (value) => vehicleName = value,
+                    onSaved: (value) => _vehicleName = value,
                   ),
                   SizedBox(
                     height: 15,
@@ -180,23 +187,20 @@ class _AddVehicleState extends State<AddVehicle> {
                       fontSize: 22,
                     ),
                     decoration: buildSignUpInputDecoration('Vehicle Owner *'),
-                    onSaved: (value) => vehicleOwner = value,
+                    onSaved: (value) => _vehicleOwner = value,
                   ),
                   SizedBox(
                     height: 15,
                   ),
                   TextFormField(
                     validator: (value) {
-                      if (value.isEmpty) {
-                        return "Vehicle can't be empty";
-                      }
                       return null;
                     },
                     style: myTextStyle.copyWith(
                       fontSize: 22,
                     ),
-                    decoration: buildSignUpInputDecoration('Vehicle RC *'),
-                    onSaved: (value) => vehicleRC = value,
+                    decoration: buildSignUpInputDecoration('Vehicle RC'),
+                    onSaved: (value) => _vehicleRC = value,
                   ),
                   SizedBox(
                     height: 15,
@@ -229,6 +233,28 @@ class _AddVehicleState extends State<AddVehicle> {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class VehicleData extends StatefulWidget {
+  @override
+  _VehicleDataState createState() => _VehicleDataState();
+}
+
+class _VehicleDataState extends State<VehicleData> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: primaryColor,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+          child: Column(
+            children: [],
           ),
         ),
       ),

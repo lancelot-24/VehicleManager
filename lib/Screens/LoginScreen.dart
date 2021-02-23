@@ -17,8 +17,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   String _userName, _password;
-  final formKey = GlobalKey<FormState>();
-  var userAuthCheck;
+  final _formKey = GlobalKey<FormState>();
+  var _userAuthCheck;
   IconData _hidePass = FontAwesomeIcons.eyeSlash;
   bool _securePass = true;
   bool _isLoading;
@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   bool validate() {
-    final form = formKey.currentState;
+    final form = _formKey.currentState;
     if (form.validate()) {
       form.save();
       return true;
@@ -50,29 +50,30 @@ class _LoginScreenState extends State<LoginScreen> {
       buildDialog(context);
     }
 
-    String url = "${apiURL}userLogin";
-    print('url is $url');
+    String _url = "${apiURL}userLogin";
+    print('url is $_url');
 
-    final sendAuthDate = jsonEncode({
+    final _body = jsonEncode({
       "userName": _userName,
       "userPassword": _password,
     });
-    Map<String, String> header = {"Content-Type": "application/json"};
+    Map<String, String> _header = {"Content-Type": "application/json"};
 
-    Response response = await post(url, body: sendAuthDate, headers: header);
+    Response response = await post(_url, body: _body, headers: _header);
     print(response.statusCode);
     print(response.body);
 
     setState(() {
-      userAuthCheck = jsonDecode(response.body);
+      _userAuthCheck = jsonDecode(response.body);
     });
-    bool success = await userAuthCheck['success'];
-    print('Auth request success = $success');
+    bool success = await _userAuthCheck['success'];
+
     if (success) {
       //flutter session saving data
-      String userName = await userAuthCheck['data']['name'];
-      int uID = await userAuthCheck['data']['uid'];
-      await saveData(uID, userName);
+      String _userName = await _userAuthCheck['data']['name'];
+      int _uID = await _userAuthCheck['data']['uid'];
+
+      await saveData(_uID, _userName);
 
       //Navigate to next page
       setState(() {
@@ -81,17 +82,27 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_isLoading == false) {
         Navigator.pop(context);
       }
+
       Navigator.pushReplacementNamed(context, '/HomeScreen');
     } else if (!success) {
-      String msg = await userAuthCheck['msg'];
+      String msg = await _userAuthCheck['msg'];
+
       setState(() {
         _isLoading = false;
       });
       if (_isLoading == false) {
         Navigator.pop(context);
       }
+
       showSnackBar(context, msg);
     } else {
+      setState(() {
+        _isLoading = false;
+      });
+      if (_isLoading == false) {
+        Navigator.pop(context);
+      }
+
       showSnackBar(context, "Something want wrong");
     }
   }
@@ -113,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 width: 300,
                 child: Form(
-                  key: formKey,
+                  key: _formKey,
                   child: Column(
                     children: [
                       SizedBox(

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_session/flutter_session.dart';
 import 'package:vehicle_manager/Helper/Colors.dart';
+import 'package:vehicle_manager/Services/SessionService.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -9,7 +9,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  var userData;
+  var _userData;
 
   @override
   void initState() {
@@ -18,13 +18,13 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void getData() async {
-    userData = await FlutterSession().get('userData');
+    _userData = await getUserData();
     Timer(Duration(seconds: 3), () {
-      print(userData);
-      if (userData == null) {
+      print(_userData);
+      if (_userData == null) {
         Navigator.pushReplacementNamed(context, '/LoginScreen');
       }
-      if (userData != null) {
+      if (_userData != null) {
         Navigator.pushReplacementNamed(context, '/HomeScreen');
       }
     });

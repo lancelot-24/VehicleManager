@@ -7,6 +7,7 @@ import 'package:vehicle_manager/Helper/Colors.dart';
 import 'package:vehicle_manager/Helper/PageHelper.dart';
 import 'package:vehicle_manager/Helper/TextFieldDecoration.dart';
 import '../Services/config.dart';
+import 'package:vehicle_manager/Services/SessionService.dart';
 
 class AddMaintenance extends StatefulWidget {
   final String vehicleNumber;
@@ -25,16 +26,16 @@ class _AddMaintenanceState extends State<AddMaintenance> {
     super.initState();
   }
 
-  final formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   String _amount, _description;
-  bool isRequesting = false;
+  bool _isRequesting = false;
 
-  var responseToAddRequest;
+  var _responseData;
 
   //validate function for form
   bool validate() {
-    final form = formKey.currentState;
+    final form = _formKey.currentState;
     if (form.validate()) {
       form.save();
       return true;
@@ -52,32 +53,33 @@ class _AddMaintenanceState extends State<AddMaintenance> {
 
   //on submit send request
   void sendAddRequest(String amount, String description) async {
-    var urlAddMaintenance = "${apiURL}vehicle/addNewMaintainance";
+    var _url = "${apiURL}vehicle/addNewMaintainance";
     setState(() {
-      isRequesting = true;
+      _isRequesting = true;
     });
-    final addMaintenanceModel = jsonEncode({
+    String _userName = await getUserName();
+    final _body = jsonEncode({
       'vehicleNumber': vehicleNumber,
       'repairCost': amount,
       'repairText': description,
+      'userName': _userName,
     });
-    Map<String, String> header = {"Content-Type": "application/json"};
+    Map<String, String> _header = {"Content-Type": "application/json"};
 
-    Response response = await post(urlAddMaintenance,
-        body: addMaintenanceModel, headers: header);
+    Response response = await post(_url, body: _body, headers: _header);
     print(response.statusCode);
     print(response.body);
 
     setState(() {
-      responseToAddRequest = jsonDecode(response.body);
+      _responseData = jsonDecode(response.body);
     });
 
-    bool success = responseToAddRequest["success"];
+    bool _success = _responseData["success"];
     setState(() {
-      isRequesting = false;
+      _isRequesting = false;
     });
 
-    if (success == true) {
+    if (_success == true) {
       showDialog(
           context: context,
           barrierDismissible: false,
@@ -98,7 +100,7 @@ class _AddMaintenanceState extends State<AddMaintenance> {
                     children: [
                       infoText(
                           msg:
-                              'Maintenance ID = ${responseToAddRequest["data"]["id"]}'),
+                              'Maintenance ID = ${_responseData["data"]["id"]}'),
                       SizedBox(
                         height: 8,
                       ),
@@ -108,19 +110,19 @@ class _AddMaintenanceState extends State<AddMaintenance> {
                       ),
                       infoText(
                           msg:
-                              'Vehicle Number = ${responseToAddRequest["data"]["VehicleNumber"]}'),
+                              'Vehicle Number = ${_responseData["data"]["VehicleNumber"]}'),
                       SizedBox(
                         height: 8,
                       ),
                       infoText(
                           msg:
-                              'Amount = ${responseToAddRequest["data"]["RepairCost"]}'),
+                              'Amount = ${_responseData["data"]["RepairCost"]}'),
                       SizedBox(
                         height: 8,
                       ),
                       infoText(
                           msg:
-                              'Description = ${responseToAddRequest["data"]["RepairDescription"]}'),
+                              'Description = ${_responseData["data"]["RepairDescription"]}'),
                       SizedBox(
                           height: 46,
                           width: double.infinity,
@@ -141,8 +143,8 @@ class _AddMaintenanceState extends State<AddMaintenance> {
               ],
             );
           });
-    } else if (success == false) {
-      String msg = responseToAddRequest["msg"];
+    } else if (_success == false) {
+      String msg = _responseData["msg"];
       showSnackBar(context, msg);
     } else {
       showSnackBar(context, "Something want wrong");
@@ -159,7 +161,7 @@ class _AddMaintenanceState extends State<AddMaintenance> {
     double myHeight = MediaQuery.of(context).size.height;
     double myWidth = MediaQuery.of(context).size.width;
     return Container(
-      child: (isRequesting)
+      child: (_isRequesting)
           ? Center(
               child: SpinKitThreeBounce(
                 color: Colors.lightBlueAccent,
@@ -170,7 +172,7 @@ class _AddMaintenanceState extends State<AddMaintenance> {
                 child: SizedBox(
                   width: 300,
                   child: Form(
-                    key: formKey,
+                    key: _formKey,
                     child: Column(
                       children: [
                         SizedBox(
