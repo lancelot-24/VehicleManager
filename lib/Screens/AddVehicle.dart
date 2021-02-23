@@ -77,7 +77,15 @@ class _AddVehicleState extends State<AddVehicle> {
       if (!_isAddLoading) {
         Navigator.pop(context);
       }
-      VehicleData();
+      showSnackBar(context, "Vehicle Added");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VehicleData(
+            vehicleNumber: _vehicleNumber,
+          ),
+        ),
+      );
     } else if (!_success) {
       String msg = await _responseData['msg'];
       setState(() {
@@ -203,32 +211,33 @@ class _AddVehicleState extends State<AddVehicle> {
                     onSaved: (value) => _vehicleRC = value,
                   ),
                   SizedBox(
-                    height: 15,
+                    height: 20,
                   ),
-                  Card(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 5,
-                    color: secondaryColor,
-                    child: MaterialButton(
-                      height: 50,
-                      elevation: 5,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      onPressed: () {
-                        if (validate()) {
-                          addVehicle();
-                        }
-                      },
-                      child: Text(
-                        'Add Vehicle',
-                        style: myTextStyle.copyWith(
-                          fontSize: 24,
-                          color: textWhite,
-                          fontWeight: FontWeight.bold,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 40),
+                        child: MaterialButton(
+                          padding: EdgeInsets.all(0),
+                          onPressed: () {
+                            if (validate()) {
+                              addVehicle();
+                            }
+                          },
+                          color: secondaryColor,
+                          height: 70,
+                          minWidth: 70,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(40)),
+                          child: Icon(
+                            Icons.arrow_right_alt_sharp,
+                            size: 50,
+                            color: textWhite,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -241,20 +250,87 @@ class _AddVehicleState extends State<AddVehicle> {
 }
 
 class VehicleData extends StatefulWidget {
+  final String vehicleNumber;
+  VehicleData({@required this.vehicleNumber});
   @override
-  _VehicleDataState createState() => _VehicleDataState();
+  _VehicleDataState createState() =>
+      _VehicleDataState(vehicleNumber: vehicleNumber);
 }
 
 class _VehicleDataState extends State<VehicleData> {
+  final String vehicleNumber;
+  _VehicleDataState({@required this.vehicleNumber});
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: secondaryColor,
+        title: Text(
+          "Vehicle Information",
+          style: myTextStyle,
+        ),
+        actions: [
+          InkWell(
+              onTap: () => Navigator.popUntil(
+                    context,
+                    ModalRoute.withName('/HomeScreen'),
+                  ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 18, 15, 0),
+                child: Text(
+                  "Skip",
+                  style: myTextStyle.copyWith(fontSize: 18),
+                ),
+              )),
+        ],
+      ),
       backgroundColor: primaryColor,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
           child: Column(
-            children: [],
+            children: [
+              Container(
+                padding: EdgeInsets.only(left: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Vehicle Number:",
+                    style: myTextStyle.copyWith(fontSize: 20),
+                  ),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 6),
+                height: 46,
+                decoration: BoxDecoration(
+                  border: Border.all(color: secondaryColor),
+                  borderRadius: BorderRadius.circular(10),
+                  color: textWhite,
+                ),
+                child: Center(
+                  child: Text(
+                    vehicleNumber,
+                    style: myTextStyle.copyWith(
+                      color: secondaryColor,
+                      fontSize: 28,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

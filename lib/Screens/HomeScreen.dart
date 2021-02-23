@@ -8,32 +8,37 @@ class HomeScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: primaryColor,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              InkWell(
-                onTap: () => Navigator.pushNamed(context, '/VehicleList'),
-                child: Image(
-                  height: 250,
-                  width: 250,
-                  image: AssetImage('assets/truck.png'),
+        body: SingleChildScrollView(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                SizedBox(
+                  height: 100,
                 ),
-              ),
-              SizedBox(
-                height: 30,
-              ),
-              InkWell(
-                onTap: () => Navigator.pushNamed(context, '/VehicleList'),
-                child: Image(
-                  height: 200,
-                  width: 200,
-                  image: AssetImage(
-                    'assets/employ.png',
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/VehicleList'),
+                  child: Image(
+                    height: 250,
+                    width: 250,
+                    image: AssetImage('assets/truck.png'),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(
+                  height: 30,
+                ),
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/VehicleList'),
+                  child: Image(
+                    height: 200,
+                    width: 200,
+                    image: AssetImage(
+                      'assets/employ.png',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

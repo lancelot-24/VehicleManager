@@ -472,8 +472,12 @@ class _VehicleInfoState extends State<VehicleInfo> {
                                             return null;
                                           },
                                           background: Container(
+                                            padding: EdgeInsets.only(right: 30),
                                             color: redWhite,
-                                            child: Icon(Icons.delete),
+                                            child: Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: Icon(Icons.delete)),
                                           ),
                                           child: Card(
                                             elevation: 5,
