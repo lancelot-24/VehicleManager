@@ -261,6 +261,73 @@ class _VehicleDataState extends State<VehicleData> {
   final String vehicleNumber;
   _VehicleDataState({@required this.vehicleNumber});
 
+  //Insurance
+  DateTime _insuranceFrom = DateTime.now();
+  DateTime _insuranceUpto = DateTime.now();
+
+  //Fitness
+  DateTime _fitnessFrom = DateTime.now();
+  DateTime _fitnessUpto = DateTime.now();
+
+  //PUC
+  DateTime _pucFrom = DateTime.now();
+  DateTime _pucUpto = DateTime.now();
+
+  //RoadTax
+  DateTime _roadTaxFrom = DateTime.now();
+  DateTime _roadTaxUpto = DateTime.now();
+
+  //datePicker
+  Future<void> _selectDate(String value) async {
+    DateTime _selectedDate;
+    _selectedDate =
+        await datePicker(context: context, selectedDate: DateTime.now());
+    switch (value) {
+      case 'insuranceFrom':
+        setState(() {
+          _insuranceFrom =
+              (_selectedDate == null) ? _insuranceFrom : _selectedDate;
+        });
+        break;
+      case "insuranceUpto":
+        setState(() {
+          _insuranceUpto =
+              (_selectedDate == null) ? _insuranceUpto : _selectedDate;
+        });
+        break;
+      case "fitnessFrom":
+        setState(() {
+          _fitnessFrom = (_selectedDate == null) ? _fitnessFrom : _selectedDate;
+        });
+        break;
+      case "fitnessUpto":
+        setState(() {
+          _fitnessUpto = (_selectedDate == null) ? _fitnessUpto : _selectedDate;
+        });
+        break;
+      case "pucFrom":
+        setState(() {
+          _pucFrom = (_selectedDate == null) ? _pucFrom : _selectedDate;
+        });
+        break;
+      case "pucUpto":
+        setState(() {
+          _pucUpto = (_selectedDate == null) ? _pucUpto : _selectedDate;
+        });
+        break;
+      case "roadTaxFrom":
+        setState(() {
+          _roadTaxFrom = (_selectedDate == null) ? _roadTaxFrom : _selectedDate;
+        });
+        break;
+      case "roadTaxUpto":
+        setState(() {
+          _roadTaxUpto = (_selectedDate == null) ? _roadTaxUpto : _selectedDate;
+        });
+        break;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -308,7 +375,10 @@ class _VehicleDataState extends State<VehicleData> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     "Vehicle Number:",
-                    style: myTextStyle.copyWith(fontSize: 20),
+                    style: myTextStyle.copyWith(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: secondaryColor),
                   ),
                 ),
               ),
@@ -330,10 +400,147 @@ class _VehicleDataState extends State<VehicleData> {
                   ),
                 ),
               ),
+              selectors(
+                title: "Insurance",
+                fromDate: _insuranceFrom,
+                uptoDate: _insuranceUpto,
+                fromCallBack: () => _selectDate("insuranceFrom"),
+                uptoCallBack: () => _selectDate("insuranceUpto"),
+              ),
+              selectors(
+                title: "Fitness",
+                fromDate: _fitnessFrom,
+                uptoDate: _fitnessUpto,
+                fromCallBack: () => _selectDate("fitnessFrom"),
+                uptoCallBack: () => _selectDate("fitnessUpto"),
+              ),
+              selectors(
+                title: "PUC",
+                fromDate: _pucFrom,
+                uptoDate: _pucUpto,
+                fromCallBack: () => _selectDate("pucFrom"),
+                uptoCallBack: () => _selectDate("pucUpto"),
+              ),
+              selectors(
+                  title: "Road Tax",
+                  fromDate: _roadTaxFrom,
+                  uptoDate: _roadTaxUpto,
+                  fromCallBack: () => _selectDate("roadTaxFrom"),
+                  uptoCallBack: () => _selectDate("roadTaxUpto"))
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget selectors(
+      {@required String title,
+      @required DateTime fromDate,
+      @required DateTime uptoDate,
+      @required VoidCallback fromCallBack,
+      @required VoidCallback uptoCallBack}) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.only(left: 16, top: 10, bottom: 10),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title,
+              style: myTextStyle.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: secondaryColor),
+            ),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Text(
+                    "From",
+                    style: myTextStyle.copyWith(
+                        fontWeight: FontWeight.bold, color: secondaryColor),
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.only(top: 5),
+                  height: 46,
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: secondaryColor),
+                    borderRadius: BorderRadius.circular(10),
+                    color: textWhite,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: Text(
+                        "${fromDate.day.toString()}/${fromDate.month.toString()}/${fromDate.year.toString()}",
+                        style: myTextStyle.copyWith(
+                            fontWeight: FontWeight.bold, color: secondaryColor),
+                        textAlign: TextAlign.center,
+                      )),
+                      IconButton(
+                        icon: Icon(
+                          Icons.date_range_rounded,
+                        ),
+                        onPressed: fromCallBack,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Text(
+                    "Upto",
+                    style: myTextStyle.copyWith(
+                        fontWeight: FontWeight.bold, color: secondaryColor),
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.only(top: 5),
+                  height: 46,
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: secondaryColor),
+                    borderRadius: BorderRadius.circular(10),
+                    color: textWhite,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: Text(
+                        "${uptoDate.day.toString()}/${uptoDate.month.toString()}/${uptoDate.year.toString()}",
+                        style: myTextStyle.copyWith(
+                            fontWeight: FontWeight.bold, color: secondaryColor),
+                        textAlign: TextAlign.center,
+                      )),
+                      IconButton(
+                        icon: Icon(
+                          Icons.date_range_rounded,
+                        ),
+                        onPressed: uptoCallBack,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        )
+      ],
     );
   }
 }

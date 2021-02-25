@@ -74,8 +74,8 @@ class _VehiclesListState extends State<VehiclesList> {
     var _body = jsonEncode({
       'userName': _userName,
     });
-    // Response response = await post(_url, headers: _header, body: _body);
-    Response response = await get(_url, headers: _header);
+    Response response = await post(_url, headers: _header, body: _body);
+
     print(response.body);
 
     setState(() {
@@ -178,205 +178,192 @@ class _VehiclesListState extends State<VehiclesList> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: primaryColor,
-        body: RefreshIndicator(
-          key: _refreshIndicatorKey,
-          onRefresh: _refresh,
-          child: (_vehiclesList.isNotEmpty)
-              ? CustomScrollView(
-                  slivers: [
-                    SliverAppBar(
-                      centerTitle: true,
-                      backgroundColor: secondaryColor,
-                      title: Text(
-                        'Vehicles List',
-                        style: myTextStyle.copyWith(
-                          fontSize: 30,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      actions: [
-                        InkWell(
-                          onTap: () {
-                            setState(() {
-                              _isDeleteVisible =
-                                  (_isDeleteVisible == false) ? true : false;
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(10, 0, 4, 0),
-                            child: Icon(Icons.delete),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/AddVehicle'),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(4, 0, 10, 0),
-                            child: Icon(Icons.add),
-                          ),
-                        ),
-                      ],
-                      expandedHeight: 130,
-                      flexibleSpace: Container(
-                        alignment: Alignment.bottomCenter,
-                        color: secondaryColor,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(10, 20, 10, 10),
-                          child: TextField(
-                            style: myTextStyle.copyWith(
-                              fontSize: 22.0,
-                            ),
-                            controller: _controller,
-                            decoration:
-                                buildSignUpInputDecoration('Search').copyWith(
-                              prefixIcon: Icon(
-                                Icons.search_rounded,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SliverList(
-                      delegate: SliverChildListDelegate([
-                        SizedBox(
-                          height: 10,
-                        ),
-                      ]),
-                    ),
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int i) {
-                          return Dismissible(
-                            key: UniqueKey(),
-                            direction: DismissDirection.endToStart,
-                            confirmDismiss: (isDismiss) {
-                              showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) {
-                                    return deleteDialog(
-                                      titleText:
-                                          'Are you sure to delete ${_showVehicle[i]["vehicleNumber"]} this vehicle',
-                                      ifYes: () {
-                                        deleteVehicle(
-                                            _showVehicle[i]["vehicleNumber"]);
-                                      },
-                                      ifNo: () => Navigator.pop(context),
-                                    );
-                                  });
-                              return null;
-                            },
-                            background: Container(
-                              padding: EdgeInsets.only(right: 30),
-                              color: redWhite,
-                              child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Icon(Icons.delete)),
-                            ),
-                            child: GestureDetector(
-                              onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => VehicleInfo(
-                                          vehicleNumber: _showVehicle[i]
-                                              ["vehicleNumber"]))),
-                              child: SizedBox(
-                                height: 80,
-                                child: Card(
-                                  margin: EdgeInsets.fromLTRB(5, 7, 5, 0),
-                                  color: textWhite,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Center(
-                                          child: Text(
-                                            _showVehicle[i]["vehicleNumber"],
-                                            style: myTextStyle.copyWith(
-                                              fontSize: 30,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Visibility(
-                                        visible: (_isDeleteVisible == true)
-                                            ? false
-                                            : true,
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(right: 20),
-                                          child: Icon(
-                                            Icons.chevron_right,
-                                            size: 30,
-                                          ),
-                                        ),
-                                      ),
-                                      Visibility(
-                                        visible: _isDeleteVisible,
-                                        child: IconButton(
-                                          padding: EdgeInsets.only(right: 20),
-                                          icon: Icon(
-                                            Icons.delete,
-                                            color: deleteIcon,
-                                          ),
-                                          onPressed: () => showDialog(
-                                              context: context,
-                                              barrierDismissible: false,
-                                              builder: (context) {
-                                                return deleteDialog(
-                                                  titleText:
-                                                      'Are you sure to delete ${_showVehicle[i]["vehicleNumber"]} this vehicle',
-                                                  ifYes: () {
-                                                    deleteVehicle(
-                                                        _showVehicle[i]
-                                                            ["vehicleNumber"]);
-                                                  },
-                                                  ifNo: () =>
-                                                      Navigator.pop(context),
-                                                );
-                                              }),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        childCount: _showVehicle.length,
-                      ),
-                    ),
-                  ],
-                )
-              : ListView(
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.35,
-                    ),
-                    Container(
-                      alignment: Alignment.topCenter,
-                      padding: EdgeInsets.fromLTRB(20, 40, 20, 10),
-                      child: (_isLoading)
-                          ? Center(
-                              child: SpinKitThreeBounce(
-                                color: Colors.lightBlueAccent,
-                              ),
-                            )
-                          : Text(
-                              'No vehicle please Add Vehicle',
-                              style: myTextStyle.copyWith(
-                                fontSize: 30,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                    ),
-                  ],
+        body: NestedScrollView(
+          headerSliverBuilder: (context, boxScroll) => [
+            SliverAppBar(
+              centerTitle: true,
+              backgroundColor: secondaryColor,
+              title: Text(
+                'Vehicles List',
+                style: myTextStyle.copyWith(
+                  fontSize: 30,
                 ),
+                textAlign: TextAlign.center,
+              ),
+              actions: [
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isDeleteVisible =
+                          (_isDeleteVisible == false) ? true : false;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 4, 0),
+                    child: Icon(Icons.delete),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/AddVehicle'),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 10, 0),
+                    child: Icon(Icons.add),
+                  ),
+                ),
+              ],
+              expandedHeight: 130,
+              flexibleSpace: Container(
+                alignment: Alignment.bottomCenter,
+                color: secondaryColor,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 20, 10, 10),
+                  child: TextField(
+                    style: myTextStyle.copyWith(
+                      fontSize: 22.0,
+                    ),
+                    controller: _controller,
+                    decoration: buildSignUpInputDecoration('Search').copyWith(
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          body: RefreshIndicator(
+            key: _refreshIndicatorKey,
+            onRefresh: _refresh,
+            child: (_vehiclesList.isNotEmpty)
+                ? ListView.builder(
+                    itemBuilder: (context, i) {
+                      return Dismissible(
+                        key: UniqueKey(),
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (isDismiss) {
+                          showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) {
+                                return deleteDialog(
+                                  titleText:
+                                      'Are you sure to delete ${_showVehicle[i]["vehicleNumber"]} this vehicle',
+                                  ifYes: () {
+                                    deleteVehicle(
+                                        _showVehicle[i]["vehicleNumber"]);
+                                  },
+                                  ifNo: () => Navigator.pop(context),
+                                );
+                              });
+                          return null;
+                        },
+                        background: Container(
+                          padding: EdgeInsets.only(right: 30),
+                          color: redWhite,
+                          child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Icon(Icons.delete)),
+                        ),
+                        child: GestureDetector(
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => VehicleInfo(
+                                      vehicleNumber: _showVehicle[i]
+                                          ["vehicleNumber"]))),
+                          child: SizedBox(
+                            height: 80,
+                            child: Card(
+                              margin: EdgeInsets.fromLTRB(5, 7, 5, 0),
+                              color: textWhite,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Center(
+                                      child: Text(
+                                        _showVehicle[i]["vehicleNumber"],
+                                        style: myTextStyle.copyWith(
+                                          fontSize: 30,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Visibility(
+                                    visible: (_isDeleteVisible == true)
+                                        ? false
+                                        : true,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 20),
+                                      child: Icon(
+                                        Icons.chevron_right,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  ),
+                                  Visibility(
+                                    visible: _isDeleteVisible,
+                                    child: IconButton(
+                                      padding: EdgeInsets.only(right: 20),
+                                      icon: Icon(
+                                        Icons.delete,
+                                        color: deleteIcon,
+                                      ),
+                                      onPressed: () => showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (context) {
+                                            return deleteDialog(
+                                              titleText:
+                                                  'Are you sure to delete ${_showVehicle[i]["vehicleNumber"]} this vehicle',
+                                              ifYes: () {
+                                                deleteVehicle(_showVehicle[i]
+                                                    ["vehicleNumber"]);
+                                              },
+                                              ifNo: () =>
+                                                  Navigator.pop(context),
+                                            );
+                                          }),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: _showVehicle.length,
+                  )
+                : ListView(
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.25,
+                      ),
+                      Container(
+                        alignment: Alignment.topCenter,
+                        padding: EdgeInsets.fromLTRB(20, 40, 20, 10),
+                        child: (_isLoading)
+                            ? Center(
+                                child: SpinKitThreeBounce(
+                                  color: Colors.lightBlueAccent,
+                                ),
+                              )
+                            : Text(
+                                'No vehicle please Add Vehicle',
+                                style: myTextStyle.copyWith(
+                                  fontSize: 30,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );
